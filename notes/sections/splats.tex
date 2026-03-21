@@ -1,0 +1,90 @@
+\section{The Splat-Experts}
+
+        In the previous example, we assumed that the `experts' contributed a single, simple PDF. The rest of the model complexity was regarding how to mix these expert opinions together into a consensus which could be evaluated. 
+
+        If, however, the covariate space included spatial coordinates \footnote{In our case, if $\vec{x} = (\text{lat},\text{long}, \alpha,\eta)$, where $\alpha$ is the dispersal rate and $\eta$ the fitness cost}, then this can drastically inhibit the model, as it is going to have to capture the full spatial complexity of the model, as well as the variations as a function of the other input parameters. Prediction is similarly delayed: to make an $N$-dimensional prediction would require $N^2$ queries into the posterior predictive. THe emulator is quick - but there are limits!
+
+        We can get around this by using a trick inherited from the computer graphics industry. Rather than trying to think of a spatial grid as a series of correlated `pixels' on a grid, onto which we have to make a full suite of predictions, we can instead think aggregating that correlated information into a Gaussian-pixel (`gaussel').
+
+        To do this, we again separate our parameter space, this time into three components:
+        \begin{enumerate}
+            \item \textbf{Spatial Coordinates} The coordinates in a final $p-$dimensional space, each position of which is to be equipped with a PDF. Denoted as $\vec{z} \in \mathbb{R}^p$.
+            \item \textbf{Conditional Variables} The remaining non-spatial parameters, $\vec{x}$
+            \item \textbf{Latent Variables} The remaining parameters of the mechanistic model. 
+        \end{enumerate}
+
+        In the previous model, each expert (at a position $\vec{x} = \vec{c}_i$) was equipped with a single PDF. In this model, we equip them with $N_m$ gaussels, each of which has a weight, $\alpha_j$, a mean $\vec{\mu}_j \in \mathbb{R}^p$ and a variance $\vec{\Sigma}_j \in \mathbb{R}^{p\times p}$. 
+
+        Each expert is therefore makes a prediction of a latent field, $\ell_j$:
+        
+        \begin{equation}
+            \ell_i(\vec{z}) = \sum_j^{N_m} \alpha_j \mathcal{N}(\vec{z} | \vec{\mu}_j, \Sigma_j)
+        \end{equation}
+
+        \begin{aside}[The Simple Approach]
+            This quantity $\ell_i$ \textit{could} be converted into a probability distribution function $p_i(\vec{z}) = h(y | g^{-1}(\ell_i(\vec{z})))$. This can then be used as $p_i$ in the standard LASPE formulation, requiring almost no modifications. 
+
+            However, in order to build up a map of predictions across $\vec{z}$, you would need to evaluate the posterior predictive at every point on the mesh. This is extremely costly.             
+        \end{aside}
+        However, instead of interpolating across the latent field, we instead interpolate individually across the components, coming to a consensus \textbf{on the parameters of the splat field}:
+
+
+        
+        \begin{align}
+            \begin{pmatrix}\alpha_j^\text{con}(\vec{x}) \\ \vec{\mu}_j^\text{con}(\vec{x}) \\ \vec{\Sigma}_j^\text{con}(\x)\end{pmatrix} 
+            & = 
+            \sum_{k=1}^{N_d}\sum_{i=1}^{N_e} T_k(\vec{x}) w_i^k(\x)   \begin{pmatrix}\alpha_j^i\\ \vec{\mu}_j^i\\ \vec{\Sigma}_j^i\end{pmatrix}
+        \end{align}
+        The consensus splat field is then:
+        \begin{equation}
+            \ell_\text{con}(\vec{z},\vec{x}) = \sum_j^{N_m} \alpha_j^\text{con}\mathcal{N}(\vec{z} | \vec{\mu}^\text{con}_j, \Sigma_j^\text{con})
+        \end{equation}
+        
+        Given a final emulated PDF of:
+
+        \begin{equation}
+            p(y | \vec{x},\vec{z},\vT,\vDelta,\h) = h(y | g^{-1}(\ell_\text{con}(\vec{z},\vec{x} | \vT)))
+        \end{equation}
+        This means that for a given $\vec{x}$, it is possible to generate the full probability distribution field to an arbitrary degree of accuracy.
+
+        Things get a little more complicated, because we still need to evaluate the posterior predictive:
+        \begin{equation}
+            p(\hat{y} | \nx, \hat{\vec{z}}) = \int h(y | g^{-1}(\ell_\text{con}(\vec{z},\vec{x} | \vT))) p(\D | \vT) P(\vT) \d \vT
+        \end{equation}
+        In this case, we once again laplace-approximate ther posterior around $\hat{\vT}$:
+         \begin{equation}
+            p(\hat{y} | \nx, \hat{\vec{z}}) \propto \sum_\vDelta \int h(y | g^{-1}(\ell_\text{con}(\vec{z},\vec{x} | \vT,\vDelta,\h))) \mathcal{N}(\vT | \hat{\vT},H) \d \vT
+        \end{equation}
+        Once again it is simple to draw $S$ samples of $\vT^{(s)}$ from the approximated posterior, and then approximate:
+        \begin{equation}
+            p(\hat{y} | \nx, \hat{\vec{z}}) \approx \frac{1}{S} \sum_{N_d} \sum_{N_e}\sum_{s=1}^S  h(y | g^{-1}(\ell_\text{con}(\vec{z},\vec{x} | \vT^{(s)})))
+        \end{equation}
+        Since this allows us to compute and cache $\vec{\mu}^(s)$ (and the other parameters of the splat-mixture), our emulator can be evaluated at any point in the space as an $S$-dimensional sum of Gaussians: allowing essentially arbitrary mapping, with each evaluation on the grid requiring only $U_p U_e S N_m$ Gaussian sums.
+
+        \begin{aside}[Scaling \& Speedup]
+            It is slightly counterintuitive that this model has \textit{better} scaling behaviour than our non-spatial model - it is linear in $U_p$ and $U_e$, whilst the LASPE model is quadratic.
+
+            However, recall that this linear behaviour is the query time \textit{after the latent field has been cached for each } $N_e, N_d$. The number of cachings required \textit{is} quadratic, as we require $U_e U_p S$ caches, each of which requires $N_d N_e$ evaluations - this is exactly the same scaling behaviour as the non-spatial case:
+            \begin{equation}
+                N_\text{cache} \propto {U_e(U_e+1) U_p (U_p + 1)} S
+            \end{equation}
+
+            Assuming that we wish to query $N_z$ points on the spatial grid, we can approximate the speed up granted to us by the splat field as follows. In a direct sampling model, each query onto the mesh requires a full evaluation of the posterior predictive, and so the number of evaluations required scales as:
+            \begin{equation}
+                N_\text{direct} \propto {U_e(U_e+1) U_p (U_p + 1)} S N_z
+            \end{equation}
+            In a splat model, the number of evaluations scales as the caching cost, plus the query cost for each point in $N_z$:
+            \begin{equation}
+                N_\text{splat} \propto {U_e(U_e+1) U_p (U_p + 1)} S + U_p U_e S N_m N_z
+            \end{equation}
+            The speedup factor is then:
+            \begin{equation}
+                F_\text{speedup} = \frac{(U_e+1)(U_p+1) N_z}{(U_e+1)(U_p+1)  + N_m N_z}
+            \end{equation}
+            In the limit where $N_z \to 0$, $F \to 0$ - for small numbers of queries, it is better to use the direct method. When $N_z \to \infty$, however, the scaling becomes:
+            \begin{equation}
+                F_\text{speedup}^\infty = \frac{(U_e+1)(U_p + 1)}{N_m}
+            \end{equation}
+            In short, so long as the number of splats is small compared to the number of experts, this provides a high degree of speedup.
+        \end{aside}
+           

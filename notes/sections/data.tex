@@ -1,0 +1,72 @@
+\section{The Data \& The Mechanistic Model}
+
+    We suppose that there exists some observable $\y \in \R^q$ which may be extracted from a function $\hat{M}$ evaluated at a parameter vector $\vec{P} \in \vec{\Pi}$:
+    \begin{equation}
+        \y = \hat{M}(\vec{P})
+    \end{equation}
+    For the cases which are of interest to us, $\hat{M}$ is a Semi-Mechanistic Model which is very expensive to compute - on the order of minutes to hours for each $\vec{P}$. 
+
+    \subsubsection*{`Semi-mechanistic' Models}
+        We term the models of interest to us as `semi-mechanistic' because we permit the model to be stochastic, and therefore $\y$ to be a realisation of an underlying random variable
+        \[\y \sim Y\]
+        Despite this, the model is a `principled construction': derived from an axiomatic model of how the underlying reality functions. 
+
+
+\subsection{Parameter Promotion}
+        The full parameter space $\vec{\Pi}$ may in general be very high dimensional. For the purposes of statistical emulation we divide it into two subspaces:
+
+        \begin{enumerate}
+            \item \textbf{Conditional Variables} These are the covariates of interest for the final emulator. 
+            They define the \emph{emulation space}
+            \begin{equation}
+                \mathcal{E} = \mathbb{R}^n
+            \end{equation}
+            and are denoted by $\vec{x}$.
+
+            \item \textbf{Latent Variables} The remaining parameters of the mechanistic model. 
+            These variables are not explicitly represented in the emulator and instead contribute stochastic variability to the output distribution. They are denoted $\vec{z}$, and we assume that there exists some prior on their values, which may be conditioned on the covariates $P(\vec{z} | \vec{x})$.
+        \end{enumerate}
+
+        \subsubsection*{Why use manual promotion?}
+            
+            PCA and related nonlinear projection methods provide a method in which the machine computes a projection into the space of the `most important variables':
+            \begin{equation}
+                \hat{\vec{\chi}} = \mathcal{T}(\vec{P})
+            \end{equation}
+            It would then be possible to learn $p(\y | \hat{\vec{\chi}})$, which is an easier task since $\hat{\chi}$ is a lower-dimensional entity, and the projection has (in theory) captured the bulk of the underlying correlations.
+
+            However, this approach requires specifying a full parameter vector $\vec{P}$ whenever the model is used to generate a prediction. For complex mechanistic systems this is often undesirable. For example, in the mosquito model we wish to predict outcomes conditioned on the gene drive parameters, without needing to specify rainfall realisations and mosquito lifetimes.
+
+            In short, we wish to simulataneously marginalise over these parameters, and fit the covariates of interest. 
+
+\subsection{Generating Data}
+        
+    The `obvious' solution for generating the data we need for our emulator would be to sample $\vec{x}$ uniformly from $\mathcal{E}$, and $\vec{z}$ from the latent prior, $P(\vec{z})$, and then compute $\vec{y} = \hat{M}(\x, \vec{z})$. Our dataset would then be $\D =  \{(\vec{x}_i, \y_i)\}_{i=1}^{D}$.
+
+    However, this would have the major drawback that if -- at a later date -- our priors on the latent variables were updated\footnote{Let's say that we got a better prediction of the rainfall/aestivation triggers/population density etc.}, then we would need to completely regenerate the training data. This would be a significant bottleneck in computation time: for the models of interest to us, the vast majority of the computational expense will be in creating $\D$.
+
+    We therefore generate our on $\vec{z}$ sample using a more generous distribution function (or even a uniform one), $P_\text{sample}(\vec{z})$ and generate \textit{two} datasets:
+    \begin{equation}
+        \D = \{(\vec{x}_i, \y_i, \pi_i)\}_{i=1}^{D}~~~\quad~~~\mathcal{Z} = \{ \vec{z}_i, \zeta_i \}_{i=1}^D
+    \end{equation}
+    The ordering between these sets is the same (so $\y_i = \hat{M}(\x_i, \vec{z}_i)$ is true). The parameters $\pi_i$ and $\zeta_i$ are defined as:
+    \begin{spalign}
+        \pi_i & = P_\text{sample}(\vec{z}_i)
+        \\
+        \zeta_i & = \frac{P_\text{latent}(\vec{z}_i)}{\pi_i}
+    \end{spalign}
+    Where $P_\text{sample}$ is the distribution used to generate $\{\vec{z}\}$ and $P_\text{latent}$ is the \textit{current prior on the latent variables}. This means that $\D$ is immutable (unless more data is added), and changes to the prior require simply recomputing $\zeta_i$ - a trivial task. 
+
+    When computing the log-posterior conditioned on the observed evidence, we simply need to correct by a factor $\zeta_i$:
+
+    \begin{equation}
+        \mathcal{L}(\D, \mathcal{Z}) = \sum_{i=1}^D \zeta_i \times \ln p(\y_i | \x_i,....)
+    \end{equation}
+
+    
+    We can see that if $\zeta_i = 1$ (which occurs when $P_\text{sample} = P_\text{latent}$), then this reduces to the obvious case. Otherwise, it means that we have an effective sample size
+    \begin{equation}
+        D^* = \frac{\left(\sum_i \zeta_i \right)^2}{\sum_i \zeta_i^2}
+    \end{equation}
+    
+    The choice of sampling distribution must therefore be informed on a best-guess understanding of how the latent prior may evolve to ensure that $D^*$ is a reasonable size for both the current latent prior, and any future updates. If $D^* \ll D$, then it will be necessary to generate more data, which is to be avoided under the current paradigm.

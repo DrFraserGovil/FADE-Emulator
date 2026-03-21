@@ -1,0 +1,26 @@
+\documentclass[fleqn,usenatbib]{mnras}
+\usepackage{newclude}
+\input{macros}
+\def\name{FADE}
+\title[The FADE Emulator]{The \name{} Emulator: A Flexible \& Anisotropic Department-of-Experts Model for Rapid Posterior-Predictive Estimation}
+\author{JFG}
+
+
+\newcommand\addsection[1]
+{
+	\include*{sections/#1}
+}
+
+\begin{document}
+	\maketitle
+	\include*{changelog}
+	\addsection{motivation}
+
+	\addsection{data}
+	\addsection{model}
+
+	\addsection{priors}
+	\addsection{posterior_predictive}
+	\addsection{splats}
+	\addsection{duals}
+\end{document}

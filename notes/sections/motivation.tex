@@ -1,0 +1,13 @@
+
+
+\section{The Motivation}
+
+	There exists many decades of literature on ways to estimate a mapping $\hat{M}:\mathcal{P}\to\mathcal{O}$ between some parameter space $\mathcal{P}$ to an observable space $\mathcal{O}$, conditioned on a set of observed data $\vec{T} = \{(\vec{y}, \vec{x})\}$. The vast majority of this work is of `estimators', wherein one is able to reliably compute $\mathbb{E}(\hat{\vec{y}} | \hat{\vec{x}}, \vec{T})$ for some new proposed set of covatiates $\hat{\vec{x}} \notin \vec{T}$. 
+
+	For our purposes however, we are more interested in a \textit{predictor }, which would enable us to predict not just the behaviour of the mean, but the entire distribution, $p(\ny| \nx, \vec{T})$.
+
+	One reason to prefer a basic Gaussian Process Emulation (And equivalently, a BLUP) is that it - by construction - is simulataneously a mean-emulator and a density-emulator. That means that you automatically generate a distribution (a Gaussian one) along with the estimated value.
+
+	\textbf{However} this is predicated wholly on the \textit{a priori} assumption that the process is Gaussian in nature - and thus that it can solely be defined by its first two moments. This works perfectly for the mean function (where GPs are universal approximators), but if we have any reason to disbelieve the Gaussian nature (and we probably do, in general), then the resulting distribution is merely a convenient first-order approximation.
+
+	In short: Gaussian Processes are insufficient when attempting to reconstruct an accurate \textit{distribution}, rather than just the \textit{mean}.

@@ -1,0 +1,69 @@
+\section{The Emulator}
+           
+    
+        Assuming that $ p^\text{fade}({y}|\vec{x},\vDelta,\vT,\h)$ is a suitable approximation of the conditional posterior on $y$, and that we have a prior $P(\vT,\vDelta)$ and our training data $\mathcal{D} = (\vec{x}_j,y_j)_{j=1}^D$, then the log-posterior\footnote{The log of the conditional probability of observing $\vec{T}$, givien our prior $\vec{P}$} takes the form:
+
+        \begin{equation}
+            \mathcal{L}(\vT,\D,\h,\vDelta) = \sum_{j=1}^D \ln\left(p(y_j|\vec{x}_j,K_1,K_2,\mathcal{F},\vT)\right) + \ln P(\vT,\vDelta)
+        \end{equation}
+
+        However, for the purposes of an emulator, we wish to be able to generate a new prediction, conditioned on the data that we have already observed. This is the posterior-predictive distribution, and is computed from:
+        \begin{equation}
+            p(\hat{y} | \vec{x},\D,\vec{h}) = \sum_{\vDelta} \int p(y | \vec{x}, \vT,\vDelta,\vec{h}) \exp\left(\mathcal{L}(\vT,\D,\vec{h})\right)\d \vT 
+        \end{equation}
+        The issue is that this sum-of-integrals is completely intractable to compute. The standard method of computing it would be to use MCMC methods to draw values from the posterior, and use that to construct a Monte-Carlo approximation to the integral. However, with $\mathcal{L}$ a trans-dimensional quantity (as $N_e, N_d$ changesm the dimensionality of the input space varies), this too becomes intractable. 
+        
+        
+        We may, however, make use of the Laplace Approximation, which is directly equivalent to expanding the log-posterior to the first non-zero order around the MAP value:
+        
+        \begin{spalign}
+            \mathcal{L}(\vT,\D,\vec{h},\vDelta) \approx  & \mathcal{L}(\hat{\vT},\D,\vec{h},\vDelta) + \frac{1}{2}\left(\vT - \hat{\vT}\right)^\intercal \pdiv{^2\mathcal{L}}{\vT^2}\left(\vT - \hat{\vT}\right) 
+            \\
+             & ~~~~~( + \approx 0)
+        \end{spalign}
+        Where $\hat{\vT}$ is the MAP solution, the parameter set which maximises the value of $\mathcal{L}$. Therefore:
+        \begin{equation}
+            p(\vT | \D,\vec{h},\vDelta) \approx \exp(\mathcal{L}(\hat{\vT})) \times \mathcal{N}\left(\vT | \hat{\vT}, H^{-1} \right)
+        \end{equation}
+        Where $H$ is the (negative) Hessian of the log-posterior:
+        \begin{equation}
+            H = - \nabla^2_\vT \mathcal{L}
+        \end{equation}
+
+        \begin{aside}[Degeneracy]
+            The Laplace approximation relies on the assumption that the probability is dominated by a single mode, which decays sufficiently quickly away from the maximum that the vast majority of information is captured by the first order expansion. As $D \to \infty$, this will become more and more true: \textbf{with one vital caveat}. 
+
+            Because both our seeds and our experts are unconstrained, the model is invariant under a permutation of $\vec{c}_i$ and $\vec{s}_j$ (so long as the associated parameters $\vec{\xi}_i$ and metrics $G_j$ are similarly permuted).  Our posterior is therefore highly multi-modal, with peaks at each permutation which lie far apart in parameter space - not captured by the simple Laplace approximation. 
+
+            However, each of these permutations results in an identical model $ p(y | \vec{x}, \vT,\vDelta,\vec{h})$, so as long as the prior is similarly permutation-invariant, it sufffices to simply multiply our posterior by this degeneracy factor:
+             \begin{align}
+                 p(\vT | \D,\vec{h},\vDelta) & \approx  g(\vDelta) \exp(\mathcal{L}(\hat{\vT})) \times \mathcal{N}\left(\vT | \hat{\vT}, H^{-1} \right)
+                  \\
+                  g(\vDelta) & = N_d! N_e!
+             \end{align}
+        \end{aside}
+
+        With this quantity in hand, it is then possible to do one of the following:
+        \begin{enumerate}
+            \item Draw samples from this multivariate normal quantity (a trivial task) to construct a Monte-Carlo integral
+            \item Follow the example of INLA, and carefully choose a `handful'\footnote{Exact quantity TBD} of quadrature points, and use these to compute the integral.
+        \end{enumerate}
+
+        Assuming the first choice is made, this reduces to an $S$-element sum over some set of target points $\mathcal{S}= \{\vT^{(1)},\vT^{(2)},\dots\} \sim  \mathcal{N}\left(\vT | \hat{\vT}, H^{-1} \right) $ to approximate the integral:     
+        
+        \begin{align}
+            \begin{split}
+            p(\hat{y}|\nx, \D,\vec{h},\vDelta) & \propto \sum_\vDelta g(\vDelta) \sum_{s \in \mathcal{S}} p^\text{fade}(\hat{y} | \nx, \vT^{(s)}, \vec{h},\vDelta)
+            % \\
+            % & = \sum_{N_d=1}^{U_p} \sum_{N_e=1}^{U_e}  g(N_d,N_e) \sum_{s \in \mathcal{S}} p^\text{fade}(\hat{y} | \nx, \vT^{(s)}, \vec{h},(N_d,N_e))
+            \\
+            & =  \sum_{N_d=1}^{U_s} \sum_{N_e=1}^{U_e}   \sum_{s \in \mathcal{S}(\vDelta)} \sum_{k=1}^{N_d} \sum_{i=1}^{N_e} g(N_d,N_e) T_k(\x| \vT^{(s)}) w_i^k(\x | \vT^{(s)}) p_i(y|\vT^{(s)})
+            \end{split}
+        \end{align}
+        Where $U_p$ and $U_e$ are the upper bounds of the number of partitions and experts permitted into the model (these are incorporated into $\h$).
+
+        Inference of a new position $\nx$ requires computing a sum of $N$ Gaussians, where
+        \begin{equation}
+            N \approx \frac{U_p (U_p+1)U_e(U_e+1)}{4} \times S
+        \end{equation}
+        Even when $N$ is large, this should be very rapid to compute, and is embarrassingly parallel etc. There are also some shortcuts that can be taken by assuming that (in an analogue to the Laplace approximation), the sum is unimodal in $N_d, N_e$ - if the mode can be identified the sum can be truncated at some distance from this point, vastly reducing the number of sums that must be computed.

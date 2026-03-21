@@ -1,0 +1,48 @@
+       
+    \subsection{Parameter Priors}
+
+        As good Bayesian statisticans, we should want to place priors which genuinely reflect our prior knowledge and expectations of the system on the parameters of the model. Some of these priors are expressed explicitly through our choice of distribution function and Kernels - for example if, in the univariate case ($\y = y$), we know that $y \geq 0$ (or rather, $p(y <0) = 0$), then our choice of $\mathcal{F}$ should be a distribution with support $y \in [0,\infty)$: this will ensure that our prior condition is automatically met.
+
+        \textcolor{red}{Need to discuss the rest of these priors!}
+
+        \begin{itemize}
+            \item $N_s, N_d$ 
+            
+            In general, we would like our model to follow an Occam-type principle: to be as parsimonious with explanations as possible. The marginalisation process inherent in the posterior predictive \textit{should} act to prevent overfitting (as the volume of the posterior space grows super-exponentially, whislt the volume of a well-fitting posterior remains constant). However, we may wish to help things along by imposing an additional prior:
+            \[
+            P(N_i) = \mathcal{N}_i \begin{cases} N_i^{-\gamma} & 1 \leq N_i \leq N_i^\text{max} \\ 0 & \text{else} \end{cases}
+            \]
+            Where $\gamma$ and $N_i^\text{max}$ are chosen a priori. This penalises models which use an excess of experts and departments.
+            \item $\vec{c}_i, \vec{s}_k$
+            
+            These are the spatial positions of the experts and departments. In general our priors here will be uniform and bounded on some domain:
+            \[
+                P(\vec{c}_i) = \begin{cases} \frac{1}{|\mathcal{V}|} & \vec{c}_i \in \mathcal{V} \\0 & \text{else} \end{cases}
+            \]
+            And similarly for $\vec{s}_i$. The domain $\mathcal{V}$ is chosen based on domain knowledge - in the case of our mosquito model ($\omega,\eta)$, it is clear that $\mathcal{V}$ is the Cartesian unit square, $0 \leq c^i_j, s^i_j \leq 1$. 
+
+            We might also wish to place a prior which encourages the model to populate departments with at least one expert (assuming that ) within the boundaries of the cell. The flexible model does not require this, but in the limit where the departments become \textit{strict}, a department without any experts is meaningless. 
+            
+            We should, however, be careful that our priors retain the permutation invariance of the model. If this invariance is broken, we would need to reconsider the degeneracy of the Laplace approximation (see below).
+            
+            A reasonable prior might be that we disbelieve any model where there exists a department where all $T_k(\vec{c}_i) \ll 1$. This corresponds to a prior:
+            \begin{spalign}
+                P(\Theta) = \left(\prod_{k=1}^{N_d} T_k^\text{max}\right)^\alpha
+                \\
+                T_k^\text{max} = \text{max}_i\left( \{T_k(\vec{c}_i)\} \right)
+            \end{spalign}
+            In short, this quantity finds the `closest' expert (as per the metric of the department), and finds out their contribution to the department. If this contribution is low, the department is penalised. 
+
+            \item $\{\phi_{ij}^k\}$
+            
+            These are the `Cholesky-parameters' which define our metric. In the absence of any data, we might reasonably expect the prior to be Euclidean in nature, which is equivalent to saying that our prior obeys $\mathbb{E}(\phi_{ij}^k) = 0$. A suitable prior might then be the standard isotropic multivariate normal:
+            \begin{equation}
+                \vec{\phi} \sim \mathcal{N}(\vec{0},\sigma^2 I)
+            \end{equation}
+
+            \item $\vec{\xi}_i$ These are the parameters of the expert model, $p_i(y) = \mathcal{F}(y; \vec{\xi}_i)$. The prior on these depends on $\mathcal{F}$ and our expectations of the model. An unimaginative prior would be to assume some 'standard' $\hat{\vec{\xi}}$, and then set
+            \begin{equation}
+                P(\vec{\xi}) = \mathcal{N}(\vec{\xi} | \hat{\vec{\xi}},\sigma^2I)
+            \end{equation}
+        \end{itemize}
+        

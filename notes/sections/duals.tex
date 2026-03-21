@@ -1,0 +1,244 @@
+
+    \section{The Learning Phase}
+
+        In order to efficiently compute the posterior predictive, we need to be able to draw samples from the posterior distribution - which we have made simple via the Laplace Approximation, which assumes it to be a multivariate normal around the MAP position. The `learning' phase therefore amounts to computing and caching the values of $\hat{\vT}$ and $\vec{\Sigma}^{-1}$.
+        \begin{align}
+            \hat{\vT}(\vDelta) & = \argmax_\vT \left( \sum_{j=1}^D \ln\left(p^\text{lapse}(y_j|\vec{x}_j,\vT,\h,\vDelta)\right) + \ln P(\vT,\vDelta)\right)
+            \\
+            \vec{\Sigma}^{-1}(\vDelta) & = - \nabla_{\vT}^2\left( \sum_{j=1}^D \ln\left(p^\text{lapse}(y_j|\vec{x}_j,\vT,\h,\vDelta)\right) + \ln P(\vT,\vDelta)\right)
+        \end{align}
+        We note that these quantities are not only a function of $\vDelta = (N_e, N_p)$, but the \textit{dimensionality} of is a function of these values too: the more partitions and experts we include, the more parameters are needed to describe them. 
+
+        Computing the MAP value in such a case is best done with a Stochastic Gradient Descent Method, which in turn means that we need to be able to evaluate the gradient:
+        \begin{equation}
+            \pdiv{\mathcal{L}}{\vT} = \left(\sum_j \frac{1}{p(y_j | \vec{x}_j, \vT,\h,\vDelta)} \pdiv{p(y_j| \vec{x}_j, \vT,\h,\vDelta)}{\vT} \right) + \pdiv{P(\vT,\vDelta)}{\vT}
+        \end{equation}
+
+        For truly optimal performance, it would behove us to analytically compute these gradients. However this is complex, fiddly and time consuming. It is probably more efficient to make use of an automatic differentiation framework. 
+        
+        \subsection{An Introduction to Automatic Differentiation}
+
+            Automatic Differentiation is a technique which allows a computer to automatically find the partial derivative of a function $f$ with respect to one of its inputs, without requiring the user to encode the derivative of the object. This assumes the function $f$ is a composite of `standard' functions.  
+
+            \newcommand\dual[2]{\left\langle #1 , #2 \right\rangle}
+            Consider the \textit{dual numbers} which consists of the ordered pairs $\dual{x}{y} \in \mathbb{R} \times \mathbb{R}$. The basic arithmetic of these numbers obeys:
+            \begin{align*}
+                \alpha + \beta \dual{x}{y} & = \dual{\alpha + \beta x}{\beta y}
+                \\
+                \dual{x}{y} \pm  \dual{w}{v} & = \dual{x\pm w}{y \pm v}
+                \\
+                \dual{x}{y} \cdot \dual{w}{v} & = \dual{xw}{xv + yw}
+                \\
+                \frac{\dual{x}{y}}{\dual{w}{v}} & = \dual{\frac{u}{v}}{\frac{yw - xv}{w^2}}
+            \end{align*}
+            This can be recognised as equivalent to the \textit{chain rule}. An equivalent formulation to the ordered pairs is the introduction of the infinitesimal $\epsilon$ which is $\epsilon > 0$, but $\epsilon^2 = 0$ - i.e. it is the ``smallest non-zero number'':
+            \begin{equation}
+                x + \epsilon y ~~\longleftrightarrow \dual{x}{y}
+            \end{equation}
+            Careful consideration show that common functions $F: \mathbb{R} \to \mathbb{R}$ can be generalised to $F: \mathbb{R}\times \mathbb{R} \to \mathbb{R}\times \mathbb{R}$
+            \begin{align*}
+                \sin(\dual{x}{y}) &= \dual{\sin(x)}{y \cos(x)}
+                \\
+                \ln(\dual{x}{y}) & = \dual{\ln(x)}{\frac{y}{x}}
+                \\
+                \exp(\dual{x}{y}) &= \exp(x)\dual{1}{y}
+                \\
+                \left(\dual{x}{y}\right)^{\dual{u}{v}} & = \dual{x^u}{y u x^{u-1} + v \ln(x) x^u}
+            \end{align*}
+            In short, if $f(x)$ is a function on $\mathbb{R}$, then the equivalent function on the duals is defined as:
+            \begin{equation}
+                f(\dual{x}{y}) = \dual{f(x)}{y \frac{\d f}{\d x}}
+            \end{equation}
+            This means that if $f$ is some composite of functions for which the dual equivalents are known, then $\tilde{f}$ can be constructed through the compositing of those dual equivalents. THat is, if $a(x)$ and $b(x)$ are functions for which the dual equivalents $\tilde{a}$ and $\tilde{b}$ are known, then:
+            \begin{equation}
+                c(x) = b(a(x)) ~~\longleftrightarrow~~\tilde{c}(\dual{x}{y}) = \tilde{b}(\tilde{a}(\dual{x}{y}))
+            \end{equation} 
+            This means that we may then trivially find the derivative of $c(x)$, by computing $\tilde{c}(\dual{x}{1})$:
+            \begin{align}
+                \tilde{c}{\dual{x}{1}} &= \tilde{b}(\dual{a(x)}{a^\prime(x)})
+                \\
+                & = \dual{b(a(x))}{a^\prime(x) b^\prime(a(x))}
+            \end{align}
+            The `automatic' part is that we naturally compute this quantity automatically, as a natural part of the dual arithmetic. Therefore, by defining a library of dual-equivalent functions, it is possible to then automatically compute the derivatives of arbitrary composits of this library.
+
+            \subsection{Multivariate Duals}
+
+                Things are slightly more complex in the case of a multivariate function, $y = f(x_1,x_2,\cdots,x_n)$ - though not by much. In this case, it can be shown that:
+                \begin{equation}
+                    f(\dual{x_1}{y_1},\dual{x_2}{y_2},\cdots) = \dual{f(x_1,x_2,\dots)}{\pdiv{f}{\vec{x}} \cdot \vec{y}}
+                \end{equation}
+                Where $\vec{x} = (x_1,x_2,...)$ and $\vec{y} = (y_1,y_2,...)$. This directional derivative is not particularly useful for us: but if we choose $\vec{y} = \hat{e}_j$ (i.e. $y_i = \delta_{ij}$), then it simplifies to:
+                \begin{equation}
+                    f(\dual{x_1}{0},\dual{x_2}{0},...,\dual{x_j}{1},\dots) = \dual{f(x_1,x_2,\dots)}{\pdiv{f}{x_j} }
+                \end{equation}
+                That is, if the duals are equal to scalars except for one element (which is equal to 1), then the result is the \textit{partial derivative with respect to the parameter associated with the non-scalar dual}.
+
+                We may therefore construct the full gradient vector by computing this quantity each time, extracting the second element, and storing it in an array. 
+
+                \begin{aside}[Similarities \& Efficiency]
+                    This is broadly similar to constructing the vector by the method of finite differences, in which we approximate:
+                    \begin{equation}
+                        \pdiv{f}{x_j} = \frac{f(\vec{x} + \delta\hat{e}_j) - f(\vec{x})}{\delta}
+                    \end{equation}
+                    However, this method is prone to numerical instability. If $\delta$ is too large, it's a bad approximation. If $\delta$ is too small, the result can be highly numerically unstable, and not representative of the true value. 
+
+                    Automatic differentiation, however, is significantly more robust against these: there is no requirement for `small things to cancel out'. There may still be some floating point error accumulation for deeply nested functions - but it does not require thinking about a valid choice of $\delta$.
+
+                    Computing the gradient of a function on $\mathbb{R}^n$ therefore requires $n$ evaluations of the dual-function - each one setting a different dual equal to 1 (whilst zeroing the others). This might be significantly less efficient than a cleverly designed analytical gradient, which might take advantage of re-using quantities in multiple components of the gradients. Cacheing such precomputable elements becomes harder in the case of automatic differentiation - but not impossible. With a suitable choice of the ordering of the input values, one can ensure that some values can be precomputed and stored - and only require recomputing when the associated parameter is perturbed.  
+                \end{aside} 
+
+        \subsubsection{Scalar-Vector Duals}
+
+            In the above example of multivariate-duals, we extended the notion to an array of ordered pairs. Whilst this worked, the result was a \textit{directional} derivative, $g(\vec{v}) = \vec{v} \cdot \nabla f$. Since there is no division operator on $\R^N$, in order to extract the full gradient\footnote{which is what we are more interested in for the purposes of gradient descent: we wish to know the direction to perturb our query. We don't even really care about the magnitude of the gradient in the naive case where the learning rate is fixed.} we have to iterate the computation $N$ times, where $N = \text{dim}(\x)$, with $\vec{v}_i = \hat{e}_i$.
+
+              This is potentially problematic if $f$ is costly to compute. Consider the toy model where $f(\vec{x}) = \exp(\hat{e}_0 \cdot \vec{x})$, where $\text{dim}(x) = N \gg 1$. An analytical approach would tell us that:
+              \begin{equation}
+                (\nabla f)\cdot \hat{e}_i = \begin{cases} f & i = 0 \\ 0 & \text{else}\end{cases}
+              \end{equation}
+              We could therefore compute the function value $f$ and the gradient $\vec{g}$ with a single computation of $\exp$, and then $N$ if-calls and memory assignments. The autodiff approach would require $N$ evaluations of $\exp$, and $N$ ifs and memory assignments. Given that computing $\exp$ is an order of magnitude slower than if/memory assignment, we can see why this might be problematic.
+
+
+            Instead, we considar the space of scalar-vector duals, $\D_N = \R \times \R^N$:
+            \begin{equation}
+                \mathcal{X} \in \D_N = \dual{x}{\vec{x}'}
+            \end{equation}
+            These obey the following arithmetic:
+             \begin{spalign}
+                \mathcal{X} + \alpha \mathcal{Y} & = \dual{x + \alpha y}{\vec{x}' + \alpha \vec{y}'}
+                \\
+                \mathcal{X} \cdot \mathcal{{Y}} & = \dual{xy}{y \vec{x}' + x \vec{y}'}
+                \\
+                \exp(\mathcal{X}) & = \exp(x)\dual{1}{\x'}
+             \end{spalign}
+             From which it follows that
+             \begin{spalign}                
+                g(\mathcal{X}) & = \dual{g(x)}{\frac{\d g}{\d x} \vec{x}'}
+                \\
+               h(\mathcal{X},\mathcal{Y}) & = \dual{h(x,y)}{\pdiv{h}{x} \x' + \pdiv{h}{y} \y '}
+            \end{spalign}
+            Therefore:
+            \begin{equation}
+                {f}(\mathcal{X}_1,\mathcal{X}_2,...,\mathcal{X}_n) = \dual{f(x_1,x_2,...,x_n)}{\sum_{i=1}^n \pdiv{f}{x_i} \x'_i}
+            \end{equation}
+            Therefore if $\x'_i = \hat{e}_i$:
+            \begin{equation}
+                {f}(\mathcal{X}_1,\mathcal{X}_2,...,\mathcal{X}_n) = \dual{f(x_1,x_2,...,x_n)}{\nabla f}
+            \end{equation}
+            This construction allows us to compute $\nabla f$ directly - at the additional cost of each dual now requiring a vector $\R^n$, instead of a single scalar. 
+
+            \begin{aside}[Speeding Up the Vectors]
+                There are various approaches that we might take to accelerating these computations. If we assume that the vast majority of operations occur on an `unmixed' portion of parameter space, then the vector becomes sparse - only a few elements are non-zero at any given moment. It is therefore quicker to not keep an entire vector, but a map of non-zero entries. This is slower than a vector when the map density approaches the density of a vector. 
+
+                Alternatively, we could just rely on simple hardware acceleration for vectorisation: if we ensure that the vector is memory-aligned then the loop over the vector can take advantage of (blockwise) SIMD parallelisation. We can explore which of these works best.
+            \end{aside}
+
+        \subsubsection{Scalar-Vector-Matrix Duals}
+
+            Our `learning' phase is the computing and caching of the Laplace approximation of the posterior. This requires finding not just $\hat{\vT}$, but the deviation around it, $\vec{\Sigma} = -\nabla^2 f(\hat{\vT})$. It would be eminently possible therefore to estimate the Laplacian by a method of finite differences, but given we have gone to the trouble of generating this lovely automatic differentiation framework, it would be a shame to then make the Laplacian a poor approximation. 
+
+            We also note that we only need to compute the Hessian once per cache-loop: the gradient needs to be optimised to Hell and back, but the Hessian can accept a slightly poorer scaling behaviour. 
+
+            We consider the \textit{hyperdual} space, $\mathcal{H}_N = \mathcal{D}_N \times \R^{N \times N}$ associated with the dual space $\mathcal{D}_N$. This takes the form of an ordered tuple of a scalar, a vector $\R^N$ and a matrix $\R^{N \times N}$:
+            \newcommand\hyper[3]{\left\langle #1, #2, #3\right\rangle}
+            \begin{equation}
+                \mathcal{X}= \hyper{x}{\x'}{X''}
+            \end{equation}
+            This obeys the arithmetic:
+            \begin{spalign}
+                \mathcal{X} \pm \alpha \mathcal{Y} &= \hyper{x \pm \alpha y}{\x' \pm \alpha \y'}{X'' \pm \alpha Y''} 
+                \\
+                \mathcal{X} \cdot \mathcal{Y} &= \hyper{xy}{y\x' + x\y'}{yX'' + xY'' + \x'(\y')^\intercal + \y'(\x')^\intercal}
+            \end{spalign}
+            Where $\vec{a} \vec{b}^\intercal$ is the outer product of the vectors.
+            \begin{spalign}
+                g(\mathcal{X}) &= \hyper{g(x)}{g'(x)\x'}{g'(x)X'' + g''(x)(\x'(\x')^\intercal)} 
+                \\
+                h(\mathcal{X}, \mathcal{Y}) &= \hyper{h(x, y)}{\pdiv{h}{x}\x' + \pdiv{h}{y}\y'}{\pdiv{h}{x}X'' + \pdiv{h}{y}Y'' + \pdiv{^2h}{x^2}(\x'{\x'}^\intercal) + \pdiv{^2h}{y^2}(\y'{\y'}^\intercal) + \pdiv{^2h}{x \partial y}(\x'{\y'}^\intercal + \y'{\x'}^\intercal)}
+            \end{spalign}
+            If $X'' = Y'' = 0$, and $\vec{x}' = \hat{e}_x, \vec{y}' = \hat{e}_y$, then it is clear that:
+            \begin{spalign}
+                g(\hyper{x}{\hat{e}_x}{\vec{0}}) &= \hyper{g(x)}{g'(x) \hat{e}_x}{g''(x) \delta_{xx}}
+                \\
+                h(\hyper{x}{\hat{e}_x}{\vec{0}},\hyper{y}{\hat{e}_y}{\vec{0}}) & = \hyper{h(x,y)}{\pdiv{h}{x} \hat{e}_x \pdiv{h}{y} +  \hat{e}_y}{\sum_{i,j \in \{x,y\}} \pdiv{^2 h}{i \partial j} \delta_{ij}}
+            \end{spalign}
+            Where $\delta_{ij} = \hat{e}_i \hat{e}_j^\intercal$ is the matrix which is zero everywhere except at $i,j$, where it is 1. Therefore, in the general multivariate case:
+            \begin{spalign}
+                f(\vec{\mathcal{X}}) & = \hyper{f(\x)}{\sum_i \pdiv{f}{x_i} \hat{e}_i}{ \sum_{ij} \pdiv{^2 f}{x_i \partial x_j} \delta_{ij}}
+                \\
+                & =\hyper{f(\x)}{\nabla f}{ \nabla^2 f } ~~~\text{when } [\vec{\mathcal{X}}]_i = \hyper{x_i}{\hat{e}_i}{\mathbf{0}}
+            \end{spalign} 
+       
+            As before, this then lets us compute the Hessian with a single trivial pass through the function -- at the cost of storing the matrix in the intermediary values.
+
+        \subsubsection{Slapdash Notation}
+            I have been somewhat careless with my notation - the functions $f(\vec{\mathcal{X}} \in \mathcal{H}_N)$, $f(\vec{\mathcal{X}} \in \mathcal{D}_N)$ and $f(\vec{x} \in \R^N)$ are fundamentally different objects: each of them operates on an entirely different arithmetic. 
+        
+            However, I have been careless precisely because we \textit{can} be careless in C++ by using template parameters:
+
+\begin{lstlisting}[language=cpp]
+
+    class Dual
+    {
+        Dual(int N) : Dimension(n), Gradient(std::vector<double>(n,0)), Value(0){};
+        int Dimension;
+        double Value;
+        std::vector<double> Gradient;
+    }
+    //define operator overloads to function as dual arithmetic
+    Dual operator+(Dual a,Dual b){...}
+    Dual operator*(Dual a,Dual b)
+    {
+        assert(a.Dimension == b.Dimension);
+        Dual out(a.Dimension)
+        out.Value = a.Value * b.Value
+        for (int i = 0; i < out.Dimension; ++i)
+        {
+            out.Gradient[i] = a.Value * b.Gradient[i] + b.Value * a.Gradient[i];
+        }
+    }
+    //define common compositable functions
+    Dual sin(Dual x)
+    {
+        double c = cos(x.Value); // only compute cos once - then re-use N times
+        auto & g = x.Gradient;
+        Dual output;
+        output.Value = sin(x.Value);
+        std::transform(g.begin(),g.end(),output.Gradient.value(),
+        [&](double g_i){return c * g_i});
+    }
+
+    // And do the same for Hyperdual, defining arithmetic and compositable functions
+
+
+    template<class T>
+    T lossFunction(double dataValue,std::vector<T> & param)
+    {
+        T output;
+        int N = input.size();
+        // A test example assuming an N/3 dimensional gaussian mixture
+        for (int i = 0; i < N; i+=3)
+        {
+            auto mu = param[3*i];
+            auto sigma = param[3*i +1];
+            auto w = param[3*i + 2];
+            auto d = (dataValue = mu)/sigma;
+            output += w * exp(-d*d);
+        }
+        return output;
+    }
+
+
+    int main(int argc, char**argv)
+    {
+        double d = //some value;
+        double x_scalar;
+        Dual x_dual;
+        Hyperdual x_hyper;
+
+        double y_scalar = lossFunction(d,x_scalar)
+        Dual y_dual = lossFunction(d,x_Dual)
+        Hyperdual y_hyper = lossFunction(d,hyper);
+    }
+\end{lstlisting}            
+
+I.e., so long as the loss function is written as a templatable function of objects which obey the correct arithmetic, and which have suitable compositing libraries written (i.e. a definition for \verb|exp(Dual x)| and \verb|atan2(Hyperdual x, Hyperdual y)|), then the compiler takes care of everything for us, and we have a highly optimisable function which can be written as if it is a simple arithmetic expression on the scalars.

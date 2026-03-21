@@ -1,0 +1,142 @@
+% \usepackage[left=1in,right=1in,bottom=1in]{geometry}
+% \usepackage{hyperref}
+
+\hypersetup{
+	 colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\setlength\parskip{5pt}
+\setlength\parindent{0pt}
+
+\tcbuselibrary{breakable,skins}
+
+\renewcommand{\vec}[1]{\mathbf{\boldsymbol{\mathrm{#1}}}}
+\newcommand{\pdiv}[2]{ \frac{\partial{} #1}{\partial{} #2}}
+\def\K{\vec{K}}
+\def\kt{\vec{k}_t}
+\def\ku{\vec{k}^\theta}
+\def\vSig{\vec{\Sigma}}
+\def\bs{\bar{\sigma}}
+\def\P{\vec{\Phi}}
+\def\p{\vec{\varphi}}
+\def\C{\left(\P \K^{-1} \P^\intercal \right)}
+\def\Qt{\K^{-1} \hat{e}_t \hat{e}_t^\intercal\K^{-1}}
+\def\Q{\vec{Q}}
+\def\k{\vec{k}}
+\def\qt{\vec{q}_t}
+\def\B{\vec{B}}
+\usepackage{listings}
+\NewDocumentEnvironment{spalign}{+b}
+{\begin{align}
+	\begin{split}
+		#1
+	\end{split}
+\end{align}
+}{}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{dred}{rgb}{0.545,0,0}
+\definecolor{dblue}{rgb}{0,0,0.545}
+\definecolor{lgrey}{rgb}{0.9,0.9,0.9}
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\lstdefinelanguage{cpp}{
+      backgroundcolor=\color{lgrey},  
+      basicstyle=\footnotesize \ttfamily \color{black} \bfseries,   
+      breakatwhitespace=false,       
+      breaklines=true,               
+      captionpos=b,                   
+      commentstyle=\color{dkgreen},   
+      deletekeywords={...},          
+      escapeinside={\%*}{*)},                  
+      frame=single,                  
+      language=C++,                
+      keywordstyle=\color{purple},  
+      morekeywords={BRIEFDescriptorConfig,string,TiXmlNode,DetectorDescriptorConfigContainer,istringstream,cerr,exit}, 
+      identifierstyle=\color{black},
+      stringstyle=\color{blue},      
+      numbers=right,                 
+      numbersep=5pt,                  
+      numberstyle=\tiny\color{black}, 
+      rulecolor=\color{black},        
+      showspaces=false,               
+      showstringspaces=false,        
+      showtabs=false,                
+      stepnumber=1,                   
+      tabsize=5,                     
+      title=\lstname,                 
+    }
+
+
+\NewDocumentEnvironment{aside}{O{} +o}{
+
+	\begin{tcolorbox}[title=#1,enhanced jigsaw,
+		breakable,boxsep=2pt,
+		left=2pt,
+		right=2pt,
+		coltitle=black,
+		colframe=gray!50,
+		colback=gray!20]
+		\IfNoValueF{#2}{{\it \small #2} \vspace{2ex}\par}
+}{		
+	\end{tcolorbox}
+}
+\NewDocumentEnvironment{analogy}{O{} +o}{
+
+	\begin{tcolorbox}[title=Terminology \& Analogy,enhanced jigsaw,
+		breakable,boxsep=2pt,
+		left=2pt,
+		right=2pt,
+		coltitle=black,
+		colframe=green!50!gray,
+		colback=green!50!gray!60!white]
+		% \IfNoValueF{#2}{{\it \small #2} \vspace{2ex}\par}
+}{		
+	\end{tcolorbox}
+}
+
+\setcounter{tocdepth}{1}
+
+\def\x{\vec{x}}
+\def\y{\vec{y}}
+\def\nx{\hat{\x}}
+\def\ny{\hat{\y}}
+\def\vT{\vec{\Theta}}
+\def\R{\mathbb{R}}
+\def\vDelta{\vec{\Delta}}
+\def\h{\vec{h}}
+\def\D{\mathcal{D}}
+\def\d{\mathrm{} d}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+
+\newcounter{countlog}
+\setcounter{countlog}{0}
+\def\counterLimit{3}
+\NewDocumentEnvironment{eclog}{m +b}{
+  
+  \if\thecountlog\counterLimit
+
+  \else
+    \stepcounter{countlog}
+    \subsection*{#1}
+
+    \begin{enumerate}
+      #2
+      \item[]~
+    \end{enumerate}
+    
+    \vspace{-4ex}
+  \fi
+}{}
+
+\NewDocumentCommand{\clog}{m +m}{
+  \begin{eclog}{#1} #2 \end{eclog}
+}
