@@ -53,7 +53,7 @@
         
         \begin{align}
             \begin{split}
-            p(\hat{y}|\nx, \D,\vec{h},\vDelta) & \propto \sum_\vDelta g(\vDelta) \sum_{s \in \mathcal{S}} p^\text{fade}(\hat{y} | \nx, \vT^{(s)}, \vec{h},\vDelta)
+            & p(\hat{y}|\nx, \D,\vec{h},\vDelta) \propto \sum_\vDelta g(\vDelta) \sum_{s \in \mathcal{S}} p^\text{fade}(\hat{y} | \nx, \vT^{(s)}, \vec{h},\vDelta)
             % \\
             % & = \sum_{N_d=1}^{U_p} \sum_{N_e=1}^{U_e}  g(N_d,N_e) \sum_{s \in \mathcal{S}} p^\text{fade}(\hat{y} | \nx, \vT^{(s)}, \vec{h},(N_d,N_e))
             \\
@@ -66,4 +66,56 @@
         \begin{equation}
             N \approx \frac{U_p (U_p+1)U_e(U_e+1)}{4} \times S
         \end{equation}
-        Even when $N$ is large, this should be very rapid to compute, and is embarrassingly parallel etc. There are also some shortcuts that can be taken by assuming that (in an analogue to the Laplace approximation), the sum is unimodal in $N_d, N_e$ - if the mode can be identified the sum can be truncated at some distance from this point, vastly reducing the number of sums that must be computed.
+        % Even when $N$ is large, this should be very rapid to compute, and is embarrassingly parallel etc. There are also some shortcuts that can be taken by assuming that (in an analogue to the Laplace approximation), the sum is unimodal in $N_d, N_e$ - if the mode can be identified the sum can be truncated at some distance from this point, vastly reducing the number of sums that must be computed.
+
+    \subsection{Accelerating Inference}
+
+        Although this sum may be quick\textit{er} to compute than the original model $\hat{M}$, it is not necessarily \textit{quick} - especially when $U_e$ or $U_p$ are large. It is therefore useful to compute if there are any ways to speed this process up.
+
+        \subsubsection{Block-Correlation}
+
+            If one assumes that the correlation structure takes the form of a block matrix of the following form:
+            \begin{equation}
+                H_\vT = H_{\text{expert}} \oplus H_{\text{other}} = \begin{pmatrix}
+                    H_{\text{expert}} & \vec{0} \\ \vec{0} & H_{\text{other}}
+                \end{pmatrix}
+            \end{equation}
+            It is then possible to precompute:
+            \begin{equation}
+                \tilde{p}_i(y | N_d, N_e) = \frac{1}{S} \sum_{s \in \mathcal{S}} p_i(y | \text{expert}^{(s)},N_d,N_e) 
+            \end{equation}
+            At inference time, one then simply needs to compute the reduced sum:
+            \begin{equation}
+                p(\hat{\y}| \x) = \sum_{N_d=1}^{U_s} \sum_{N_e=1}^{U_e}  \sum_{i=1}^{N_e} \tilde{p}_i(y) \left( \sum_{s \in \mathcal{S}(\vDelta)} \sum_{k=1}^{N_d} W_{ik}(\x)\right)
+            \end{equation}
+            This is a computational saving because when computing $p(y)$ we typically compute it on a grid of $y$ values of resolution $R$. 
+
+            Precomputing the mean-expert opinion means that at inference time we can avoid computing $N_d R\times S$ sums of the `opinions', an instead merely compute $S N_d$ sums of the weights and then one $R$-element multiplication.   
+        \subsubsection{Truncating Sums}
+           
+
+        The calculation can also be accelerated by noting that the sum over $N_d, N_e$ does not need to be fully computed: using the same logic as behind the Laplace approximation: if there exists an optimal pair $\vDelta = (N_d, N_e) = (\nu_d, \nu_e)$ which maximises the value of $\exp\left(\mathcal{L}(\hat{\vT}(\vDelta))\right) g(\vDelta) $, then the summation will be dominated by the nearby terms:
+        \begin{equation}
+            \sum_{N_d=1}^{U_e} \sum_{N_e= 1}^{U_e} \approx \sum_{N_d = \nu_d - \delta_d}^{\nu_d + \delta_d} \sum_{N_e = \nu_e - \delta_e}^{\nu_e + \delta_e} 
+        \end{equation}
+        We can also generalise this an allow $\nu_e = \nu_e(d)$. 
+
+        We can also accelerate the computing of the individual $W_{ik}$ values by noting that the values of $T_k(\x)$ and $T_k(\vec{c}_i)$ tend to zero quickly, and will most likely be dominated by terms $0.1 \lesssim T_k < 1$\footnote{The proof of this statement is a bit handwavey. We're basically appealing to the idea that the odds of there being a position which is equidistant between $>$10 experts is infinitesimally small. This gets less true as the dimensionality of the covariate space grows.}
+        
+        If $T_k(x) \ll 1$, therefore we may omit the computation of $\sum_i w_{ik} p_i$, on the assumption that this term is subdominant. 
+        
+        In short, we can easily estimate which departments we can ignore for a prediction value $\vec{x}$, so the sum over $i = 0 \to N_e$ can be reduced to $i \in K(\vec{x})$ where $\text{dim}(K(\vec{x})) \ll N_d$. 
+
+        Similarly, we can compute which \textit{experts} need to be computed based on $T_k(\vec{c}_i)$ and $w_{ik}$. We may then generate a subset of non-vanishing expert contributions $E_k(\vec{x})$, where $\text{dim}(E_k(\x))\ll N_e$.
+
+        Both of these statments are, naturally, dependent on the actual value of $\vT$ being used - and since this value is varied during the sum - the suitable cutoff values are non-trivial. However, since this evaluation only needs to occur once (for caching), it is suffice to compute $S$ MAP-draws and find an good-enough cutoff. 
+
+        If we compute and cache values of $(\nu_e,\delta_e, \nu_d,\delta_d, \{K(\vec{x})\}, \{E_k(\vec{x})\})$ at train-time, then the inference simplifies down to a sum of $N'$ Gaussians, where
+        \begin{equation}
+            \langle N' \rangle = 4 \delta_d \delta_e \left\langle \text{dim}(K) \text{dim}(E_k)\right\rangle \times S
+        \end{equation}
+        IF we assume that, on average, each summation truncation removes a fraction $\bar{\alpha}$ of elements to be summed, then:
+        \begin{equation}
+            \frac{N'}{N}= \left(1 - \bar{\alpha}\right)^4
+        \end{equation}
+        $\bar{\alpha}$ need only be $\sim 0.15$ for this to result in a 2x speedup of inference, and if it reaches 0.5 (which is not a ludicrous assumption - a \textit{lot} of terms will be zero!), then we get a 20x speedup. 
