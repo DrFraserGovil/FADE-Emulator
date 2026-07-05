@@ -1,15 +1,20 @@
+% !TEX root = ../fade.tex
 \section{The Data \& The Mechanistic Model}
-
-    We suppose that there exists some observable $\y \in \R^q$ which may be extracted from a function $\hat{M}$ evaluated at a parameter vector $\vec{P} \in \vec{\Pi}$:
+ 
+    We supposes that there exists some observable $\y \in \R^q$ which may be extracted from a function $\hat{M}$ evaluated at a parameter vector $\vec{P} \in \vec{\Pi}$:
     \begin{equation}
         \y = \hat{M}(\vec{P})
     \end{equation}
     For the cases which are of interest to us, $\hat{M}$ is a Semi-Mechanistic Model which is very expensive to compute - on the order of minutes to hours for each $\vec{P}$. 
 
+
+
+
     \subsubsection*{`Semi-mechanistic' Models}
         We term the models of interest to us as `semi-mechanistic' because we permit the model to be stochastic, and therefore $\y$ to be a realisation of an underlying random variable
         \[\y \sim Y\]
-        Despite this, the model is a `principled construction': derived from an axiomatic model of how the underlying reality functions. 
+		Despite this, the model is a `principled construction': derived from an axiomatic model of how the underlying reality functions. There is nothing in princple which restricts us to this class of models; only that this is what motivates us: these `principled constructions' require extensive computational resources to compute, as opposed to a `trivial construction' which can easily generate numbers from an underlying distribution (and hence have no reason to be emulated). 
+
 
 
 \subsection{Parameter Promotion}
@@ -26,6 +31,8 @@
             \item \textbf{Latent Variables} The remaining parameters of the mechanistic model. 
             These variables are not explicitly represented in the emulator and instead contribute stochastic variability to the output distribution. They are denoted $\vec{z}$, and we assume that there exists some prior on their values, which may be conditioned on the covariates $P(\vec{z} | \vec{x})$.
         \end{enumerate}
+
+
 
         \subsubsection*{Why use manual promotion?}
             

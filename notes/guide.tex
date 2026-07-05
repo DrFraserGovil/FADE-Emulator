@@ -1,0 +1,47 @@
+\documentclass[11pt]{article}
+
+\input{macros.tex}
+
+\newgeometry{left=0.7in,right=0.7in,top=0.5in,bottom=0.5in}
+\title{\vspace{-1cm}Emulation Projects}
+\date{}
+\begin{document}
+
+	\maketitle
+
+	\vspace{-1cm}
+
+	Thank you for attending the meeting yesterday, and we hope that we have piqued your interest with regards to emulation, and the specific challenges that we are trying to solve in our work. We appreciate that there's a lot of information to take in, so this document and the accompanying notes should help you asses how to move forward.
+
+
+
+
+	\section{First Task: Experimentation}
+		The most important next step for you is to read up on the existing state of the literature, and to begin to experiment with and run your own synthetic data generation routines. The following resources may be of use to you in that task:
+
+		\begin{description}
+			\item[The FADE notes] Along with this document, we have sent you the PDF of our current internal notes regarding the development of the FADE emulator; including what is hopefully some helpful analogies to explain the way that we are thinking about this.
+			\item[\href{https://www.sfu.ca/~ssurjano/index.html}{Test Function Library}] This website has a list of functions that might be useful for you to experiment with. Try choosing parameter promotions (See 2.1 of the FADE notes) and choosing prior distributions on the latent variables that give strange and unusual distributions at different points in parameter space.
+			\item[\href{https://github.com/knrumsey/duqling}{The \texttt{duqling} package}] This github repo \href{https://arxiv.org/html/2512.09060v2}{and their paper} is an attempt to provide a standardised approach for analysing emulators. It also includes R implementations of a huge suite of test functions.
+		\end{description}
+
+		The duqling paper gives a huge list of existing emulators; try picking a few off the list and exploring if they have implementations that you can run on your test data. How well do they do?
+
+	\section{Second Task: Comparison \& Scoring}
+
+		Given a set of data and an emulator, there are many different ways to evaluate `how good' the emulator is: the duqling paper above adopts the CRPS score; but this is not the only method of doing so: the Kolmogorov-Smirnov test, for example.
+
+		After you have played around with these models, and created a suite of data for your own purposes, you should all work together to determine which scoring system you prefer. It's not necessary to come to a \textit{consensus} -- because different tasks might require different tools -- but you should be able to explain why you chose the scoring metric that you did.
+
+	\section{Looking Ahead}
+
+		At this point, you should have a solid grounding in \textit{what} we are doing as a group, and \textit{why} we are doing the things we do. We can then begin exploring further the `questions' that were posed during our initial presentation, and hone in on what you will focus on for the remainder of the project.
+
+		\subsection{The FADE C++ Code}
+
+			The FADE code (and the associated documentation) is not currently hosted online. We will ensure that you get access to this as soon as possible: the current deadline for the code release is the 15th of July.
+
+
+
+
+\end{document}

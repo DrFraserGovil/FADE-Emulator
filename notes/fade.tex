@@ -1,9 +1,13 @@
-\documentclass[fleqn,usenatbib]{mnras}
+%  \documentclass[fleqn,usenatbib]{mnras}
+\documentclass{article}
+
 \usepackage{newclude}
 \input{macros}
 \def\name{FADE}
-\title[The FADE Emulator]{The \name{} Emulator: A Flexible \& Anisotropic Department-of-Experts Model for Rapid Posterior-Predictive Estimation}
+% \title[The FADE Emulator]{Distributional Emulation with \scshape{FADE}}
+\title{Distributional Emulation with \scshape{FADE}}
 \author{JFG}
+
 
 
 \newcommand\addsection[1]
@@ -13,14 +17,18 @@
 
 \begin{document}
 	\maketitle
-	\include*{changelog}
+	% \include*{changelog}
 	\addsection{motivation}
 
 	\addsection{data}
 	\addsection{model}
 
+
+	 
 	\addsection{priors}
 	\addsection{posterior_predictive}
-	\addsection{splats}
+
+	% \addsection{splats}
 	\addsection{duals}
+
 \end{document}
