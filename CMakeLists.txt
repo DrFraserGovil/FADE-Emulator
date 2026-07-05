@@ -20,12 +20,10 @@ add_executable(fade ${CORE_SOURCES})
 
 ### For development purposes, it is quicker and easier to use the local library
 ### But other people will need to download it
- 
- 
+
 option(FORCE_JSL_CLONE "Force a JSL clone instead of using a local copy" OFF)
  
-set(LOCAL_JSL "${CMAKE_CURRENT_SOURCE_DIR}/../JSL")
- 
+set(LOCAL_JSL "/home/jfg/CodeProjects/JSL")
 if((NOT FORCE_JSL_CLONE) AND (EXISTS "${LOCAL_JSL}/CMakeLists.txt"))
     message(STATUS "Using local JSL from ${LOCAL_JSL}")
     add_subdirectory("${LOCAL_JSL}" "${CMAKE_CURRENT_BINARY_DIR}/jsl_build")
@@ -39,7 +37,5 @@ else()
     )
     FetchContent_MakeAvailable(JSL)
 endif()
-
-
 
 target_link_libraries(fade PRIVATE JSL)
