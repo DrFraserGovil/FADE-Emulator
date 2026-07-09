@@ -12,6 +12,7 @@ void FieldList(Wrapper &&W)
 	HelpData.Commands["train"] = "Activates training mode";
 	W(JSL::Interface::Field<bool>(Verbose, "Verbose", {"v", "verbose"}, false, "If true, recieve DEBUG level logs to the output stream. Takes priority over Quiet mode."));
 	W(JSL::Interface::Field<bool>(Quiet, "Quiet", {"q", "quiet"}, false, "If true, recieve only ERROR logs to the output stream; everything else is suppressed unless Verbose is also set to true"));
+	W(JSL::Interface::Field<std::set<std::filesystem::path>>(Files, "Files", {"file", "input"}, {}, "A set of files to be processed. Any files passed as positional arguments will also be stored here"));
 	W(Hyper);
 	W(Training);
 	W(Inference);

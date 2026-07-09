@@ -3,7 +3,7 @@
 #include "InferSettings.h"
 #include "TrainingSettings.h"
 #include <JSL/Interface/Aggregator.h>
-
+#include <filesystem>
 //! @name Basic Settings
 //! @command test Enters the testing mode for basic diagnostics
 //! @command train Activates training mode
@@ -22,5 +22,10 @@ class BasicSettings : public JSL::Interface::Aggregator<BasicSettings>
 	//! @alias q quiet
 	//! @brief If true, recieve only ERROR logs to the output stream; everything else is suppressed unless Verbose is also set to true
 	bool Quiet = false;
+
+	//! @alias file, input
+	//! @brief A set of files to be processed. Any files passed as positional arguments will also be stored here
+	std::set<std::filesystem::path> Files = {};
+
 #include "BasicSettings.BasicSettings.autogen"
 };

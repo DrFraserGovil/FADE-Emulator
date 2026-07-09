@@ -7,4 +7,5 @@ template<typename Wrapper>
 void FieldList(Wrapper &&W)
 {
 	Name = "Training Settings";
+	W(Priors);
 }

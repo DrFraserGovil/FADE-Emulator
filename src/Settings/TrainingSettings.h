@@ -1,3 +1,4 @@
+#include "PriorSettings.h"
 #include <JSL/Interface/Aggregator.h>
 using namespace JSL::Interface;
 
@@ -5,8 +6,6 @@ using namespace JSL::Interface;
 class TrainingSettings : public Aggregator<TrainingSettings>
 {
   public:
-	//! @brief The maximum number of iterations before training is force-completed
-	//! @alias max-iteration
-	size_t MaxIteration = -1;
+	PriorSettings Priors;
 #include "TrainingSettings.TrainingSettings.autogen"
 };
