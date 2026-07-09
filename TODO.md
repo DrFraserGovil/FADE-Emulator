@@ -4,24 +4,24 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-TODO: Design a standardised vault system for storing the output of a training routine
-TODO: Get a parameter model to save itself to a suitable vault
-TODO: Get an inference routine to read the parameter from a vault
+* TODO: Design a standardised vault system for storing the output of a training routine
+* TODO: Get a parameter model to save itself to a suitable vault
+* TODO: Get an inference routine to read the parameter from a vault
 
 ### This Week's Tasks
  
-TODO: Get the inference routine up 
-TODO: Basic annealing optimisation 
-TODO: Create visualisation / interface routine
+* TODO: Get the inference routine up 
+* TODO: Basic annealing optimisation 
+* TODO: Create visualisation / interface routine
 
 ### Longer Term Tasks 
 
-TODO: Bones of the more intelligent optimiser
-TODO: Documentation setup
+* TODO: Bones of the more intelligent optimiser
+* TODO: Documentation setup
 
 
 ## Completed Taks
 
-~Unpack interface~
-~Create JSL/LSJ interface~
-~Parameter vector indexing~
+* ~Unpack interface~
+* ~Create JSL/LSJ interface~
+* ~Parameter vector indexing~
