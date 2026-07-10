@@ -4,12 +4,12 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
+* TODO: Establish prior draws for the parameter vector
 * TODO: Create visualisation / interface routine
 * TODO: Create inference interface
-* TODO: Establish prior draws for the parameter vector
 
 ### This Week's Tasks
- 
+* TODO: Create the scoring system 
 * TODO: Get the inference routine up 
 * TODO: Basic annealing optimisation 
 

@@ -8,5 +8,9 @@ class InferenceSettings : public Aggregator<InferenceSettings>
 	//! @detail If no value provided, the Files will be searched for a valid model file; otherwise the code will exit with an error.
 	//! @alias model, m
 	std::optional<std::filesystem::path> ModelFile = std::nullopt;
+
+	double Ylower = -3;
+	double YUpper = 3;
+	size_t Resolution = 100;
 #include "InferSettings.InferenceSettings.autogen"
 };

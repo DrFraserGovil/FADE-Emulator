@@ -96,7 +96,27 @@ class FixedFADE
 
 	ParameterVector<T> Parameters;
 
+	std::pair<T, T> EstimateMoments()
+	{
+		if (Settings.Hyper.Family == "gaussian")
+		{
+			T muSum = 0;
+			T vSum = 0;
+			for (sint e = 0; e < Nd; ++e)
+			{
+				T &mu = Parameters.ExpertParameter(e, 0);
+				T &sigma = Parameters.ExpertParameter(e, 1);
+
+				muSum += ExpertWeights[e] * mu;
+				vSum += ExpertWeights[e] * (sigma * sigma + mu * mu);
+			}
+			return {muSum, sqrt(vSum - muSum * muSum)};
+		}
+	}
+
   private:
+	T mean;
+	T variance;
 	HyperParameters &Hyper;
 
 	std::vector<T> TkPos;
@@ -193,7 +213,7 @@ class FADE
 	// we assume that the settings portion has already been read in and modified; we are just populating the submodels at this point
 	void Load(JSL::IO::VaultReader &vault)
 	{
-		forModelInModels([&vault](auto &model) { model.Load(vault); });
+		forModelInModels([&vault](auto &model) { model.Load(vault); model.SyncParameters(); });
 		// LOG(INFO) << "Loaded model
 	}
 

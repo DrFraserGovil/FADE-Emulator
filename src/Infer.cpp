@@ -8,6 +8,7 @@
 std::filesystem::path findModel()
 {
 	std::filesystem::path out;
+	bool needsErase = false;
 	if (Settings.Inference.ModelFile)
 	{
 		out = Settings.Inference.ModelFile.value();
@@ -29,6 +30,7 @@ std::filesystem::path findModel()
 					}
 					LOG(DEBUG) << file << " passed modelfile checks";
 					out = file;
+					needsErase = true;
 				}
 			}
 			catch (...)
@@ -42,6 +44,12 @@ std::filesystem::path findModel()
 	{
 		LOG(ERROR) << "Could not locate a suitable model file.\nModel files should be passed via the --model flag";
 		exit(1);
+	}
+	if (needsErase)
+	{
+		// switch 'em over
+		Settings.Files.erase(out);
+		Settings.Inference.ModelFile = out;
 	}
 
 	LOG(INFO) << "Loading model data from " << out.string();
@@ -67,6 +75,64 @@ void MergeSettings(JSL::IO::VaultReader &vault)
 
 void Load(FADE<double> &model)
 {
+	auto file = findModel();
+
+	JSL::IO::VaultReader vault(file.string());
+	MergeSettings(vault);
+	model.Load(vault);
+	LOG(INFO) << "Model loading complete";
+}
+
+typedef std::optional<std::pair<double, double>> queryRange;
+
+std::map<std::vector<double>, queryRange> GetQueries()
+{
+	LOG(INFO) << "Loading query points";
+
+	auto tmp = JSL::Log::Indent(); // increases indent level until Infer is over
+	std::map<std::vector<double>, queryRange> out;
+	for (auto &f : Settings.Files)
+	{
+		try
+		{
+			const size_t N = Settings.Hyper.InputDimension;
+			JSL::IO::forConvertedLineIn<std::vector<double>>(f, [&out, N](auto vec) {
+				if (vec.size() == N)
+				{
+					if (!out.contains(vec))
+					{
+						LOG(WARN) << "Duplicate queries for " << vec << "detected; defaulting to moment-based range";
+					}
+					out[vec] = std::nullopt;
+				}
+				else
+				{
+					if (vec.size() == N + 2)
+					{
+						std::pair p{std::move(vec[vec.size() - 2]), std::move(vec.back())};
+						vec.resize(vec.size() - 2);
+						out[vec] = p;
+					}
+					else
+					{
+						LOG(WARN) << "Ignoring " << vec << "; dimensions don't match";
+					}
+				}
+			});
+		}
+		catch (...)
+		{
+			LOG(WARN) << f << " not a valid inference query file";
+		}
+	}
+
+	if (out.empty())
+	{
+		LOG(ERROR) << "No valid query points were provided. No inference can occur.";
+		exit(1);
+	}
+
+	return out;
 }
 
 void Infer()
@@ -76,12 +142,11 @@ void Infer()
 
 	FADE<double> model;
 
-	auto file = findModel();
+	// populates the model with contents
+	Load(model);
 
-	JSL::IO::VaultReader vault(file.string());
-	MergeSettings(vault);
-	model.Load(vault);
-	LOG(INFO) << "Model loading complete";
+	// get the query points
+	auto q = GetQueries();
 
 	LOG(INFO) << "Inference routine completed";
 	JSL::Log::Global().IndentLevel--;
