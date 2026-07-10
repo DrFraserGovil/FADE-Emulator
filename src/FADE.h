@@ -74,6 +74,7 @@ class FixedFADE
 
 	void Load(JSL::IO::VaultReader &vault)
 	{
+		Parameters.UpdateDerived();
 		std::string param = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne) + ".param";
 		if (!vault.Files().contains(param))
 		{
@@ -213,6 +214,7 @@ class FADE
 	// we assume that the settings portion has already been read in and modified; we are just populating the submodels at this point
 	void Load(JSL::IO::VaultReader &vault)
 	{
+		Hyper.Reset();
 		forModelInModels([&vault](auto &model) { model.Load(vault); model.SyncParameters(); });
 		// LOG(INFO) << "Loaded model
 	}

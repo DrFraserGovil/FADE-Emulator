@@ -69,8 +69,8 @@ void MergeSettings(JSL::IO::VaultReader &vault)
 	auto lines = vault["train.config"].AsLines();
 	copy.Configure(lines, " ");
 
-	LOG(INFO) << "Local hyperparameter mirroring training values";
 	Settings.Hyper = copy.Hyper;
+	LOG(INFO) << "Local hyperparameter mirroring training values";
 }
 
 void Load(FADE<double> &model)
@@ -93,15 +93,16 @@ std::map<std::vector<double>, queryRange> GetQueries()
 	std::map<std::vector<double>, queryRange> out;
 	for (auto &f : Settings.Files)
 	{
+		LOG(INFO) << "Searching " << f.string();
 		try
 		{
 			const size_t N = Settings.Hyper.InputDimension;
 			JSL::IO::forConvertedLineIn<std::vector<double>>(f, [&out, N](auto vec) {
 				if (vec.size() == N)
 				{
-					if (!out.contains(vec))
+					if (out.contains(vec))
 					{
-						LOG(WARN) << "Duplicate queries for " << vec << "detected; defaulting to moment-based range";
+						LOG(WARN) << "Duplicate queries for " << vec << " detected; defaulting to moment-based range";
 					}
 					out[vec] = std::nullopt;
 				}
@@ -131,7 +132,7 @@ std::map<std::vector<double>, queryRange> GetQueries()
 		LOG(ERROR) << "No valid query points were provided. No inference can occur.";
 		exit(1);
 	}
-
+	LOG(INFO) << out.size() << " query points found";
 	return out;
 }
 

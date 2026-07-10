@@ -20,6 +20,7 @@ class ParameterVector
 
 	void UpdateDerived()
 	{
+		DeriveDimensions();
 		ConvertMatrix();
 	}
 	std::string ToString()

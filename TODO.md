@@ -21,6 +21,7 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ## Completed Taks
 
+* ~Simple synthetic data for testing~
 * ~Get an inference routine to read the parameter from a vault~
 * ~Generalise the FADE model to be multidimensional from the get-go, rather than retrofittign it in~
 * ~Get a parameter model to save itself to a suitable vault~

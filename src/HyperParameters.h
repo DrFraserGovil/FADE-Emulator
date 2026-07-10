@@ -22,6 +22,10 @@ class HyperParameters
 	sint MinNe;
 	HyperParameters()
 	{
+	}
+
+	void Reset()
+	{
 		InputDimension = Settings.Hyper.InputDimension;
 		OutputDimension = Settings.Hyper.OutputDimension;
 		MatrixSize = InputDimension * (InputDimension + 1) / 2;
