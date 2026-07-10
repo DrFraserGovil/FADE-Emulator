@@ -2,7 +2,8 @@
 
 .jvim.session
 fade
-
+*.fde
+*.tst
 
 ######### Standard CPP ignores
 
