@@ -16,5 +16,9 @@ class TrainingSettings : public Aggregator<TrainingSettings>
 	//! @alias max-iteration
 	size_t MaxIteration = -1;
 
+	//! @brief The fraction of training data allocated to the validation pool
+	//! @alias validate
+	double ValidationFraction = 0.2;
+
 #include "TrainingSettings.TrainingSettings.autogen"
 };

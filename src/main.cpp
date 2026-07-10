@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 {
 	auto mode = Initialise(argc, argv);
 	WelcomeMessage();
-
+	LOG(WARN) << Settings.Hyper.InputDimension;
 	LOG(DEBUG) << "Processing input: " << Settings.Files;
 	switch (mode)
 	{

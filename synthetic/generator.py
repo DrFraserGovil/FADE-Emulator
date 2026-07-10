@@ -29,8 +29,8 @@ def OneDFunction():
     y3 += (np.random.normal(sep*(xTrain-1),sig)*dd3p + np.random.normal(-sep*(xTrain-1),sig)*dd3m)
 
     sample = np.maximum(0,y1 + y2 + y3)
-
-    X = np.array([xTrain,sample]).T
+    r = np.ones((N,)) 
+    X = np.array([xTrain,r,sample,r]).T
     np.savetxt("single_train.dat",X, delimiter= " ",fmt='%.7f') 
 
     ### generate queries

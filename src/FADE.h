@@ -23,13 +23,14 @@ class FixedFADE
 		}
 	}
 
-	void GuassianPrediction(double y)
+	double GuassianPrediction(double y)
 	{
 		double v = 0;
 		for (sint e = 0; e < Ne; ++e)
 		{
 			v += ExpertWeights[e] * GaussianDistribution(y, e, Parameters);
 		}
+		return v;
 	}
 
 	void SetPosition(std::vector<double> &x)
@@ -209,6 +210,11 @@ class FADE
 		{
 			callback(model);
 		}
+	}
+
+	void SetPosition(std::vector<double> pos)
+	{
+		forModelInModels([&pos](auto &model) { model.SetPosition(pos); });
 	}
 
 	// we assume that the settings portion has already been read in and modified; we are just populating the submodels at this point

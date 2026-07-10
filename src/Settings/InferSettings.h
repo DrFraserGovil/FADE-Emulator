@@ -9,8 +9,6 @@ class InferenceSettings : public Aggregator<InferenceSettings>
 	//! @alias model, m
 	std::optional<std::filesystem::path> ModelFile = std::nullopt;
 
-	double Ylower = -3;
-	double YUpper = 3;
 	size_t Resolution = 100;
 #include "InferSettings.InferenceSettings.autogen"
 };

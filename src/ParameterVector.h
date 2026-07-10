@@ -91,11 +91,12 @@ class ParameterVector
 			}
 		}
 	*/
-  private:
 	std::vector<T> Params;
+
+  private:
+	sint TotalSize;
 	std::vector<T> Lks;
 	sint LooseParam = 0;
-	sint TotalSize;
 	sint MatrixSize;  // InputDimension *(InputDimension + 1)/2
 	sint PhiStart;	  // Hyper.InputDimension * Nd
 	sint ExpertStart; // PhiStart + MatrixSize * Nd
@@ -105,7 +106,6 @@ class ParameterVector
 	sint Nd;
 	void DeriveDimensions()
 	{
-
 		MatrixSize = Hyper.InputDimension * (Hyper.InputDimension + 1) / 2;
 
 		TotalSize = (MatrixSize + Hyper.InputDimension) * Nd + (Hyper.InputDimension + Hyper.ProbabilityDimension) * Ne;

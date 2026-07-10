@@ -11,9 +11,9 @@ typedef size_t sint;
 class HyperParameters
 {
   public:
-	sint InputDimension;
-	sint OutputDimension;
-	sint ProbabilityDimension;
+	sint InputDimension = 1;
+	sint OutputDimension = 1;
+	sint ProbabilityDimension = 2;
 	sint MatrixSize;
 
 	sint MaxNd;
