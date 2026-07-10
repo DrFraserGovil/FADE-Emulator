@@ -7,10 +7,11 @@ template <class T = double>
 class FixedFADE
 {
   public:
-	FixedFADE(HyperParameters &hyper, sint depCount, sint expertCount) : Hyper(hyper), Parameters(hyper, depCount, expertCount)
+	FixedFADE(HyperParameters &hyper, sint depCount, sint expertCount) : Parameters(hyper, depCount, expertCount), Hyper(hyper)
 	{
 		Ne = expertCount;
 		Nd = depCount;
+		LOG(DEBUG) << "  - Constructing submodel " << Nd << "-" << Ne;
 		SetSizes();
 	}
 	void SyncParameters()
@@ -65,17 +66,38 @@ class FixedFADE
 
 	void Save(JSL::IO::VaultWriter &vault)
 	{
-		std::string root = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne);
+		std::string param = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne) + ".param";
 
-		std::string hyperfile = root + "/hyper.param";
-		vault[hyperfile] << Hyper.ToString();
-		std::string param = root + "/vector.param";
+		// std::string param = root + "/vector.param";
 		vault[param] << Parameters.ToString();
 	}
 
+	void Load(JSL::IO::VaultReader &vault)
+	{
+		std::string param = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne) + ".param";
+		if (!vault.Files().contains(param))
+		{
+			LOG(ERROR) << "Provided input is missing a submodel entry for " << param << ", despite the metadata indicating it exists.\nThe model is most likely corrupted";
+			exit(1);
+		}
+		LOG(DEBUG) << "  - Loading submodel " << param << " from file";
+		auto lines = vault[param].AsLines();
+		if (lines.size() != Parameters.Size())
+		{
+			LOG(ERROR) << "Dimensional mismatch between model on disk and submodel (" << Nd << ", " << Ne << ")\n"
+					   << "Either the model is corrupted, or it is not compatible with this version of FADE.";
+			exit(1);
+		}
+		else
+		{
+			Parameters.Load(lines);
+		}
+	}
+
+	ParameterVector<T> Parameters;
+
   private:
 	HyperParameters &Hyper;
-	ParameterVector<T> Parameters;
 
 	std::vector<T> TkPos;
 	std::vector<std::vector<T>> TkExpert;
@@ -141,7 +163,6 @@ class FADE
 		{
 			for (sint ne = Settings.Hyper.Experts.first; ne <= Settings.Hyper.Departments.second; ++ne)
 			{
-				LOG(DEBUG) << "Constructing submodel " << nd << "-" << ne;
 				Models.try_emplace({nd, ne}, Hyper, nd, ne);
 			}
 		}
@@ -152,11 +173,32 @@ class FADE
 		assert(Models.contains(idx));
 		return Models.at(idx);
 	}
-	void Save(JSL::IO::VaultWriter &out)
+	void Save(JSL::IO::VaultWriter &vault)
 	{
+		std::string hyperfile = "hyper.param";
+		vault[hyperfile] << Hyper.ToString();
+
+		forModelInModels([&vault](auto &model) { model.Save(vault); });
+	}
+
+	template <class U>
+	void forModelInModels(U callback)
+	{
+		for (auto &[_, model] : Models)
+		{
+			callback(model);
+		}
+	}
+
+	// we assume that the settings portion has already been read in and modified; we are just populating the submodels at this point
+	void Load(JSL::IO::VaultReader &vault)
+	{
+		forModelInModels([&vault](auto &model) { model.Load(vault); });
+		// LOG(INFO) << "Loaded model
 	}
 
   private:
-	HyperParameters Hyper;
 	std::map<std::pair<sint, sint>, FixedFADE<T>> Models;
+
+	HyperParameters Hyper;
 };

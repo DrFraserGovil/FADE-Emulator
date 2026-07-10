@@ -4,8 +4,6 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* TODO: Generalise the FADE model to be multidimensional from the get-go, rather than retrofittign it in
-* TODO: Get an inference routine to read the parameter from a vault
 * TODO: Create visualisation / interface routine
 * TODO: Create inference interface
 * TODO: Establish prior draws for the parameter vector
@@ -23,6 +21,8 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ## Completed Taks
 
+* ~Get an inference routine to read the parameter from a vault~
+* ~Generalise the FADE model to be multidimensional from the get-go, rather than retrofittign it in~
 * ~Get a parameter model to save itself to a suitable vault~
 * ~Design a standardised vault system for storing the output of a training routine~
 * ~Unpack interface~

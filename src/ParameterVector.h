@@ -61,6 +61,14 @@ class ParameterVector
 		return Lks[MatrixSize * department + idx];
 	}
 
+	void Load(std::vector<std::string> &fileData)
+	{
+		for (sint i = 0; i < TotalSize; ++i)
+		{
+			Params[i] = JSL::String::ParseTo<double>(fileData[i]);
+		}
+	}
+
 	/*
 		void SetExpertPosition(sint expert, std::vector<double> pos)
 		{

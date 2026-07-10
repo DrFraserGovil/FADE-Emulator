@@ -117,5 +117,7 @@ int main(int argc, char **argv)
 			exit(1);
 			break;
 	}
+
+	LOG(INFO) << "FADE actions completed. Exiting with code 0";
 	return 0;
 }
