@@ -1,8 +1,8 @@
 #pragma once
 #include <cmath>
 
-template <class T = double>
-T inline LogKernel(T squaredDistance, T boundary)
+template <class T = double, class U = double>
+T inline LogKernel(T squaredDistance, U boundary)
 {
 	return -0.5 * squaredDistance / (0.0001 + boundary * boundary);
 	// return

@@ -1,9 +1,10 @@
-#include "FADE.h"
-#include "ParameterVector.h"
+#include "Infer.h"
 #include "Settings.h"
 #include "Train.h"
 #include "Unpack.h"
 #include <JSL.h>
+
+// This is the complement to the extern declaration; this defines the global settings object
 BasicSettings Settings;
 
 void WelcomeMessage()
@@ -27,8 +28,7 @@ enum class Mode
 	Unpack,
 };
 
-void TestMode(std::optional<Mode> &mode, std::string cmd, std::string name,
-	Mode pair)
+void checkMode(std::optional<Mode> &mode, std::string cmd, std::string name, Mode pair)
 {
 	if (JSL::String::iEquals(cmd, name))
 	{
@@ -49,6 +49,7 @@ Mode Initialise(int argc, char **argv)
 	// Set up the logger
 	JSL::Log::Global().Level = INFO;
 	JSL::Log::Global().ShowHeaders = false;
+	JSL::Log::Global().DebugColour = JSL::Display::Colour(60, 60, 130);
 	if (Settings.Verbose)
 	{
 		JSL::Log::Global().Level = DEBUG;
@@ -63,11 +64,11 @@ Mode Initialise(int argc, char **argv)
 	{
 		std::optional<Mode> tmp;
 
-		TestMode(tmp, cmd, "test", Mode::Test);
-		TestMode(tmp, cmd, "train", Mode::Train);
-		TestMode(tmp, cmd, "infer", Mode::Infer);
-		TestMode(tmp, cmd, "predict", Mode::Infer);
-		TestMode(tmp, cmd, "unpack", Mode::Unpack);
+		checkMode(tmp, cmd, "test", Mode::Test);
+		checkMode(tmp, cmd, "train", Mode::Train);
+		checkMode(tmp, cmd, "infer", Mode::Infer);
+		checkMode(tmp, cmd, "predict", Mode::Infer);
+		checkMode(tmp, cmd, "unpack", Mode::Unpack);
 		if (!tmp)
 		{
 			LOG(DEBUG) << cmd
@@ -84,6 +85,13 @@ Mode Initialise(int argc, char **argv)
 		Settings.Help();
 		exit(0);
 	}
+
+	if (Settings.ExportFile)
+	{
+		LOG(DEBUG) << "Exporting config to " << Settings.ExportFile.value();
+		Settings.Export(Settings.ExportFile.value());
+	}
+
 	return out.value();
 }
 
@@ -91,15 +99,15 @@ int main(int argc, char **argv)
 {
 	auto mode = Initialise(argc, argv);
 	WelcomeMessage();
-	// HyperParameters hyper(2, 1, 2, Settings.Hyper.Departments,
-	// Settings.Hyper.Experts);
 
 	LOG(DEBUG) << "Processing input: " << Settings.Files;
-	// FADE F(hyper);
 	switch (mode)
 	{
 		case Mode::Train:
 			Train();
+			break;
+		case Mode::Infer:
+			Infer();
 			break;
 		case Mode::Unpack:
 			Unpack();

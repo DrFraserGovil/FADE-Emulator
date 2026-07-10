@@ -7,5 +7,7 @@ template<typename Wrapper>
 void FieldList(Wrapper &&W)
 {
 	Name = "Training Settings";
+	W(Field<std::string>(OutputFiles, "OutputFiles", {"model-out", "save"}, "model.fde", "The name to which the model instance is saved. Loading this file at a later date allows inference with the trained model"));
+	W(Field<size_t>(MaxIteration, "MaxIteration", {"max-iteration"}, -1, "The maximum number of iterations before training is force-completed"));
 	W(Priors);
 }

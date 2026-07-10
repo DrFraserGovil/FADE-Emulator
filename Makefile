@@ -15,7 +15,7 @@ all:
 mirror:
 	@command -v lsj>/dev/null 2>&1 && lsj src/Settings.h src/Settings/*.h -fv || echo "No mirror found, using cached values" 
 ship:
-	@mirror
+	@make mirror
 	@mkdir -p $(BUILD_DIR)
 	@cmake -S . -B $(BUILD_DIR) -DFORCE_JSL_CLONE=ON
 	@cmake --build $(BUILD_DIR) --target fade -- --no-print-directory

@@ -27,5 +27,8 @@ class BasicSettings : public JSL::Interface::Aggregator<BasicSettings>
 	//! @brief A set of files to be processed. Any files passed as positional arguments will also be stored here
 	std::set<std::filesystem::path> Files = {};
 
+	//! @alias settings
+	//! @brief If set, this value is used to save the value of the configuration file
+	std::optional<std::string> ExportFile = std::nullopt;
 #include "BasicSettings.BasicSettings.autogen"
 };

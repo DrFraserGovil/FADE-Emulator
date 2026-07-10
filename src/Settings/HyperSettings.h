@@ -6,13 +6,13 @@ using namespace JSL::Interface;
 class HyperSettings : public Aggregator<HyperSettings>
 {
   public:
-	//! @brief The number of departments to run with
+	//! @brief The (min,max) number of departments to run with
 	//! @alias dep, partition
-	size_t Departments = 2;
+	std::pair<size_t, size_t> Departments = {1, 5};
 
-	//! @brief The number of experts to run with
+	//! @brief The (min,max) number of experts to run with
 	//! @alias expert, node
-	size_t Experts = 3;
+	std::pair<size_t, size_t> Experts = {2, 10};
 
 	//! @brief The distribution family to use
 	//! @detail Valid options are [\"gaussian\"]

@@ -2,27 +2,21 @@
 #include "Distribution.h"
 #include "Kernels.h"
 #include "ParameterVector.h"
+#include <JSL.h>
 template <class T = double>
-class FADE
+class FixedFADE
 {
   public:
-	void SetHyper(HyperParameters newHyper)
+	FixedFADE(HyperParameters &hyper, sint depCount, sint expertCount) : Hyper(hyper), Parameters(hyper, depCount, expertCount)
 	{
-		Hyper = newHyper;
-		TkPos.resize(Hyper.Nd);
-		ExpertWeights.resize(Hyper.Ne);
-		Parameters.SetHyper(newHyper);
-		TkExpert.resize(Hyper.Ne, std::vector<T>(Hyper.Nd));
+		Ne = expertCount;
+		Nd = depCount;
+		SetSizes();
 	}
-
-	void DeriveFromParameters()
+	void SyncParameters()
 	{
-		k1Scale = (Parameters.ExpertScale() < 1) ? exp(Parameters.ExpertScale()) : Parameters.ExpertScale();
-
-		k2Scale = (Parameters.DepartmentScale() < 1) ? exp(Parameters.DepartmentScale()) : Parameters.DepartmentScale();
-
-		Parameters.ConvertMatrix();
-		for (sint i = 0; i < Hyper.Ne; ++i)
+		Parameters.UpdateDerived();
+		for (sint i = 0; i < Ne; ++i)
 		{
 			ComputeTkFromVec([&](sint j) -> T & { return Parameters.ExpertPosition(i, j); }, TkExpert[i]);
 		}
@@ -31,7 +25,7 @@ class FADE
 	void GuassianPrediction(double y)
 	{
 		double v = 0;
-		for (sint e = 0; e < Hyper.Ne; ++e)
+		for (sint e = 0; e < Ne; ++e)
 		{
 			v += ExpertWeights[e] * GaussianDistribution(y, e, Parameters);
 		}
@@ -40,20 +34,20 @@ class FADE
 	void SetPosition(std::vector<double> &x)
 	{
 		ComputeTkFromVec([&x](sint i) -> double & { return x[i]; }, TkPos);
-		for (sint k = 0; k < Hyper.Nd; ++k)
+		for (sint k = 0; k < Nd; ++k)
 		{
 			T wsum = 0;
-			for (sint i = 0; i < Hyper.Ne; ++i)
+			for (sint i = 0; i < Ne; ++i)
 			{
 				T dk = ComputeDistance([&x](sint idx) -> double & { return x[idx]; }, [&](sint idx) -> T & { return Parameters.ExpertPosition(i, idx); }, k);
-				TkExpert[i][k] += LogKernel(dk, k1Scale);
+				TkExpert[i][k] += LogKernel(dk, 1);
 				if (i == 0) { wsum = TkExpert[i][k]; }
 				else
 				{
 					wsum = ale(wsum, TkExpert[i][k]);
 				}
 			}
-			for (sint i = 0; i < Hyper.Ne; ++i)
+			for (sint i = 0; i < Ne; ++i)
 			{
 				if (k == 0)
 				{
@@ -68,18 +62,24 @@ class FADE
 			}
 		}
 	}
-	FADE(HyperParameters hyper) : Hyper(hyper), Parameters(hyper)
+
+	void Save(JSL::IO::VaultWriter &vault)
 	{
-		SetHyper(Hyper);
+		std::string root = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne);
+
+		std::string hyperfile = root + "/hyper.param";
+		vault[hyperfile] << Hyper.ToString();
+		std::string param = root + "/vector.param";
+		vault[param] << Parameters.ToString();
 	}
 
-	HyperParameters Hyper;
+  private:
+	HyperParameters &Hyper;
 	ParameterVector<T> Parameters;
 
 	std::vector<T> TkPos;
 	std::vector<std::vector<T>> TkExpert;
 
-	// private:
 	template <class A, class B>
 	T ComputeDistance(A a, B b, size_t dep)
 	{
@@ -100,10 +100,10 @@ class FADE
 	void ComputeTkFromVec(U setOfVectors, std::vector<T> &output)
 	{
 		T sum = 0;
-		for (sint k = 0; k < Hyper.Nd; ++k)
+		for (sint k = 0; k < Nd; ++k)
 		{
 			T dk = ComputeDistance(setOfVectors, [&](size_t idx) { return Parameters.DepPosition(k, idx); }, k);
-			output[k] = LogKernel(dk, k2Scale);
+			output[k] = LogKernel(dk, 1);
 			if (k == 0)
 			{
 				sum = output[k];
@@ -115,13 +115,48 @@ class FADE
 		}
 		// then normalise the Tks
 		// whilst keeping them in log space
-		for (sint k = 0; k < Hyper.Nd; ++k)
+		for (sint k = 0; k < Nd; ++k)
 		{
 			output[k] -= sum;
 		}
 	}
 	std::vector<T> ExpertWeights;
-	std::vector<T> logTkCi;
-	T k1Scale;
-	T k2Scale;
+	sint Nd;
+	sint Ne;
+	void SetSizes()
+	{
+		TkPos.resize(Nd);
+		ExpertWeights.resize(Ne);
+		TkExpert.resize(Ne, std::vector<T>(Nd));
+	}
+};
+
+template <class T = double>
+class FADE
+{
+  public:
+	FADE() : Hyper()
+	{
+		for (sint nd = Settings.Hyper.Departments.first; nd <= Settings.Hyper.Departments.second; ++nd)
+		{
+			for (sint ne = Settings.Hyper.Experts.first; ne <= Settings.Hyper.Departments.second; ++ne)
+			{
+				LOG(DEBUG) << "Constructing submodel " << nd << "-" << ne;
+				Models.try_emplace({nd, ne}, Hyper, nd, ne);
+			}
+		}
+	}
+	FixedFADE<T> &operator[](std::pair<sint, sint> idx)
+	{
+		// assert(Models
+		assert(Models.contains(idx));
+		return Models.at(idx);
+	}
+	void Save(JSL::IO::VaultWriter &out)
+	{
+	}
+
+  private:
+	HyperParameters Hyper;
+	std::map<std::pair<sint, sint>, FixedFADE<T>> Models;
 };

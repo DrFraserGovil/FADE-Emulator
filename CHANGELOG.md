@@ -15,6 +15,7 @@ This is the initial set of stagings for the 'release version' of the FADE emulat
 
 ### Added
 
+* Updated to work with JSL 3.1.0
 * More sophisticated build system; integration with FetchContent to automatically configure against a chosen JSL version
 <!-- ### Changed -->
 <!-- ### Removed -->
