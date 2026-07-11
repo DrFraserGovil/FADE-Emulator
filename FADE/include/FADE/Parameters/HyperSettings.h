@@ -27,5 +27,7 @@ class HyperSettings : public Aggregator<HyperSettings>
 	//! @alias output-dimension
 	size_t OutputDimension = 1;
 
+	size_t MatrixSize;
+	size_t ProbabilityDimension;
 #include "HyperSettings.HyperSettings.autogen"
 };

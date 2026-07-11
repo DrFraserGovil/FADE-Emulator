@@ -19,4 +19,17 @@ namespace FADE
 			Value = vec[size + 1];
 		}
 	};
+
+	struct ClusteredTrains
+	{
+		std::vector<double> Position;
+		std::vector<double> Value;
+		std::vector<double> Weights;
+		bool ReachedLimit = false;
+		ClusteredTrains(TrainingPoint &x);
+		double DistanceTo(TrainingPoint &x);
+		void Add(TrainingPoint &x, size_t limit);
+	};
+
+	std::pair<std::vector<ClusteredTrains>, std::vector<ClusteredTrains>> ProcessTrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize, size_t clusterLimit);
 } // namespace FADE

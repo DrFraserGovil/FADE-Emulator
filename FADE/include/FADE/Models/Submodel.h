@@ -3,17 +3,17 @@
 #include <FADE/Distributions/Distribution.h>
 #include <FADE/Distributions/Kernels.h>
 #include <FADE/ModelSettings.h>
-#include <FADE/Parameters/HyperSettings.h>
 #include <FADE/Parameters/ParameterVector.h>
+#include <FADE/Train/TrainingPoint.h>
 #include <JSL.h>
 namespace FADE
 {
 
 	template <class T = double>
-	class FixedFADE
+	class Submodel
 	{
 	  public:
-		FixedFADE(HyperParameters &hyper, sint depCount, sint expertCount) : Parameters(hyper, depCount, expertCount), Hyper(hyper)
+		Submodel(ModelSettings &parentSettings, sint depCount, sint expertCount) : Parameters(parentSettings.Hyper, depCount, expertCount), Settings(parentSettings)
 		{
 			Ne = expertCount;
 			Nd = depCount;
@@ -29,7 +29,7 @@ namespace FADE
 			}
 		}
 
-		double GuassianPrediction(double y)
+		double GaussianPrediction(double y)
 		{
 			double v = 0;
 			for (sint e = 0; e < Ne; ++e)
@@ -106,7 +106,7 @@ namespace FADE
 
 		std::pair<T, T> EstimateMoments()
 		{
-			// if (Hyper.Family == "gaussian")
+			// if (Settings.Hyper.Family == "gaussian")
 			// {
 			T muSum = 0;
 			T vSum = 0;
@@ -125,8 +125,7 @@ namespace FADE
 	  private:
 		T mean;
 		T variance;
-		HyperParameters &Hyper;
-
+		ModelSettings &Settings;
 		std::vector<T> TkPos;
 		std::vector<std::vector<T>> TkExpert;
 
@@ -134,10 +133,10 @@ namespace FADE
 		T ComputeDistance(A a, B b, size_t dep)
 		{
 			T dk = 0;
-			for (sint ni = 0; ni < Hyper.InputDimension; ++ni)
+			for (sint ni = 0; ni < Settings.Hyper.InputDimension; ++ni)
 			{
 				double Ld_i = 0;
-				for (sint nj = ni; nj < Hyper.InputDimension; ++nj)
+				for (sint nj = ni; nj < Settings.Hyper.InputDimension; ++nj)
 				{
 					Ld_i += (a(nj) - b(nj)) * Parameters.L(dep, nj, ni);
 				}

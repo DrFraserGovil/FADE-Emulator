@@ -114,9 +114,8 @@ void Predict(std::set<std::filesystem::path> paths)
 
 	auto mfile = findModel(Settings.Model.Infer.ModelFile, paths);
 
-	LOG(INFO) << "Spooling up model";
-	FADE::Model<double> model(Settings.Model.Hyper);
-	model.Load(mfile, Settings.Model);
+	LOG(INFO) << "Spooling up model from " << mfile.string();
+	FADE::Model<double> model(Settings.Model);
 
 	auto out = GetQueries();
 

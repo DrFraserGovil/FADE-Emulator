@@ -5,15 +5,6 @@
 #include <JSL/Vectors/Search.h>
 #include <filesystem>
 
-// void Load(FADE<double> &model)
-// {
-// 	auto file = findModel();
-//
-// 	JSL::IO::VaultReader vault(file.string());
-// 	MergeSettings(vault);
-// 	model.Load(vault);
-// 	LOG(INFO) << "Model loading complete";
-// }
 void MergeSettings(JSL::IO::VaultReader &vault)
 {
 	LOG(ERROR) << "Settings merge not fixed under new paradigm";

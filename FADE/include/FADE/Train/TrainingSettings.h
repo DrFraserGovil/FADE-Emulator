@@ -19,8 +19,13 @@ class TrainingSettings : public Aggregator<TrainingSettings>
 
 	//! @brief Points Closer together than this are considered at the same point in the emulation space
 	//! @detail This increases the efficiency of the training, at a marginal loss in accuracy
-	//! @alias train-clustering
+	//! @alias clustering-radius
 	double ClusteringRadius = 1e-6;
+
+	//! @brief The maximum number of points which are allowed to cluster together
+	//! @detail This prevents excessive clustering from removing too much data, without needing to a-priori guess at a clustering radius
+	//! @alias clustering-limit
+	size_t MaximumClusterCount = 25;
 
 #include "TrainingSettings.TrainingSettings.autogen"
 };

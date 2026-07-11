@@ -48,6 +48,7 @@ Mode Initialise(int argc, char **argv)
 	JSL::Log::Global().Level = INFO;
 	JSL::Log::Global().ShowHeaders = false;
 	JSL::Log::Global().DebugColour = JSL::Display::Colour(60, 60, 130);
+	JSL::Log::Global().AlignSize(30);
 	if (Settings.Verbose)
 	{
 		JSL::Log::Global().Level = DEBUG;

@@ -1,10 +1,5 @@
 // #include <FADE/Models/FADE.h>
-#include <FADE/Train/Train.h>
-#include <JSL/IO/Vault.h>
-#include <JSL/Log.h>
 // #include <string>
-typedef size_t sint;
-using namespace JSL::String;
 // template <class T>
 // void SaveModel(FADE<T> &model)
 // {

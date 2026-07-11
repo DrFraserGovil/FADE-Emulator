@@ -1,5 +1,6 @@
 #pragma once
 #include "Submodel.h"
+
 namespace FADE
 {
 
@@ -7,18 +8,31 @@ namespace FADE
 	class Model
 	{
 	  public:
-		Model(HyperSettings &hyper) : Hyper()
+		Model(ModelSettings &settings)
 		{
-			for (sint nd = hyper.Departments.first; nd <= hyper.Departments.second; ++nd)
+			Settings = settings;
+			if (settings.Infer.ModelFile)
 			{
-				for (sint ne = hyper.Experts.first; ne <= hyper.Departments.second; ++ne)
+				Load(settings);
+			}
+			Settings.Hyper.MatrixSize = Settings.Hyper.InputDimension * (Settings.Hyper.InputDimension + 1) / 2;
+			Settings.Hyper.ProbabilityDimension = 1;
+			for (sint nd = settings.Hyper.Departments.first; nd <= settings.Hyper.Departments.second; ++nd)
+			{
+				for (sint ne = settings.Hyper.Experts.first; ne <= settings.Hyper.Departments.second; ++ne)
 				{
-					Models.try_emplace({nd, ne}, Hyper, nd, ne);
+					Models.try_emplace({nd, ne}, Settings, nd, ne);
 				}
 			}
 		}
-		Model(ModelSettings &mset) : Model(mset.Hyper) {};
-		FixedFADE<T> &operator[](std::pair<sint, sint> idx)
+
+		void Train(std::vector<TrainingPoint> &trainingData)
+		{
+			auto [train, validate] = ProcessTrainingData(trainingData, Settings.Train.ValidationFraction, Settings.Train.ClusteringRadius, Settings.Train.MaximumClusterCount);
+			// forModelInModels([&](auto &model) { model.Save(vault); });
+		}
+
+		Submodel<T> &operator[](std::pair<sint, sint> idx)
 		{
 			// assert(Models
 			assert(Models.contains(idx));
@@ -26,8 +40,8 @@ namespace FADE
 		}
 		void Save(JSL::IO::VaultWriter &vault)
 		{
-			std::string hyperfile = "hyper.param";
-			vault[hyperfile] << Hyper.ToString();
+			// std::string settings.Hyper.ile = "settings.Hyper.param";
+			// vault[settings.Hyper.ile] << Hyper.ToString();
 
 			forModelInModels([&vault](auto &model) { model.Save(vault); });
 		}
@@ -47,19 +61,21 @@ namespace FADE
 		}
 
 		// we assume that the settings portion has already been read in and modified; we are just populating the submodels at this point
-		void Load(JSL::IO::VaultReader &vault, HyperSettings &newhyper)
+		void Load(JSL::IO::VaultReader &vault, HyperSettings &newsettings)
 		{
-			Hyper.Reset(newhyper);
+			// Hyper.Reset(newsettings.Hyper.;
 			forModelInModels([&vault](auto &model) { model.Load(vault); model.SyncParameters(); });
 		}
 
-		void Load(std::filesystem::path modelfile, ModelSettings &settings)
+		void Load(ModelSettings &settings)
 		{
+			Settings = settings;
 		}
 
 	  private:
-		std::map<std::pair<sint, sint>, FixedFADE<T>> Models;
+		std::map<std::pair<sint, sint>, Submodel<T>> Models;
 
-		HyperParameters Hyper;
+		// HyperParameters Hyper;
+		ModelSettings Settings;
 	};
 } // namespace FADE

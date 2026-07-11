@@ -1,6 +1,7 @@
 #include "../Settings.h"
 #include "../modes.h"
 #include <FADE/ModelSettings.h>
+#include <FADE/Models/FADE.h>
 #include <FADE/Train/Train.h>
 #include <JSL.h>
 #include <vector>
@@ -8,7 +9,6 @@ using namespace FADE;
 std::vector<TrainingPoint> ExtractData(std::set<std::filesystem::path> files, ModelSettings &model)
 {
 	std::vector<TrainingPoint> out;
-	LOG(INFO) << "Loading training data";
 	auto tmp = JSL::Log::Indent();
 
 	for (auto &f : files)
@@ -53,9 +53,12 @@ void TrainModel(std::set<std::filesystem::path> paths)
 {
 	LOG(INFO) << JSL::Display::Colour(30, 100, 30, true) << JSL::Display::White() << "Selected: Training Mode" << JSL::Display::ResetAll();
 	auto tmp = JSL::Log::Indent(); // increases indent level until Infer is over
-	LOG(WARN) << "No training routines are currently implemented. The current placeholder randomly generates a FADE instance.";
+
+	LOG(INFO) << "Loading training data";
 	auto data = ExtractData(paths, Settings.Model);
 
-	LOG(ERROR) << "Model does not yet train itself....";
-	exit(1);
+	LOG(INFO) << "Creating model instance";
+	FADE::Model<double> Model(Settings.Model);
+
+	Model.Train(data);
 }

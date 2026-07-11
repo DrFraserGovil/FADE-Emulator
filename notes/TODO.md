@@ -4,7 +4,6 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* TODO: Add a simple clusterer to the input data to allow for more efficient training 
 * TODO: Create the scoring system 
 * TODO: Basic annealing optimisation 
 
@@ -20,6 +19,7 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ## Completed Taks
 
+* ~Add a simple clusterer to the input data to allow for more efficient training~ 
 * ~Extract into a library + interface?~
 * ~Create single-model inference interface~
 * ~Basic training data readin~
