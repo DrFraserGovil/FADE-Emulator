@@ -1,6 +1,5 @@
 #include "Settings.h"
-#include "modes/train.h"
-#include "modes/unpack.h"
+#include "modes.h"
 #include <FADE.h>
 #include <JSL.h>
 // This is the complement to the extern declaration; this defines the global settings object
@@ -104,9 +103,9 @@ int main(int argc, char **argv)
 		case Mode::Train:
 			TrainModel(Settings.Files);
 			break;
-		// // case Mode::Infer:
-		// 	Infer();
-		// 	break;
+		case Mode::Infer:
+			Predict(Settings.Files);
+			break;
 		case Mode::Unpack:
 			Unpack(Settings.Files);
 			break;

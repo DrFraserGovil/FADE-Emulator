@@ -1,5 +1,5 @@
-#include "train.h"
 #include "../Settings.h"
+#include "../modes.h"
 #include <FADE/ModelSettings.h>
 #include <FADE/Train/Train.h>
 #include <JSL.h>
