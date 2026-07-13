@@ -1,3 +1,4 @@
+#include "AnnealingSettings.h"
 #include <JSL/Interface/Aggregator.h>
 using namespace JSL::Interface;
 
@@ -26,6 +27,9 @@ class TrainingSettings : public Aggregator<TrainingSettings>
 	//! @detail This prevents excessive clustering from removing too much data, without needing to a-priori guess at a clustering radius
 	//! @alias clustering-limit
 	size_t MaximumClusterCount = 25;
+
+	double LogZero = -999999999999999;
+	AnnealingSettings Annealing;
 
 #include "TrainingSettings.TrainingSettings.autogen"
 };

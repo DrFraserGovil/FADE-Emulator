@@ -23,8 +23,8 @@ namespace FADE
 	struct ClusteredTrains
 	{
 		std::vector<double> Position;
-		std::vector<double> Value;
-		std::vector<double> Weights;
+		std::vector<double> Values;
+		std::vector<double> LogWeights;
 		bool ReachedLimit = false;
 		ClusteredTrains(TrainingPoint &x);
 		double DistanceTo(TrainingPoint &x);

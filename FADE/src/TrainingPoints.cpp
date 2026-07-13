@@ -10,8 +10,8 @@ namespace FADE
 	ClusteredTrains::ClusteredTrains(TrainingPoint &x)
 	{
 		Position = x.Position;
-		Value = {x.Value};
-		Weights = {x.Weight};
+		Values = {x.Value};
+		LogWeights = {log(x.Weight) + 1e-100};
 	}
 	double ClusteredTrains::DistanceTo(TrainingPoint &x)
 	{
@@ -25,13 +25,13 @@ namespace FADE
 	}
 	void ClusteredTrains::Add(TrainingPoint &x, size_t limit)
 	{
-		sint n = Value.size();
+		sint n = Values.size();
 		for (sint i = 0; i < Position.size(); ++i)
 		{
 			Position[i] = (n * Position[i] + x.Position[i]) / (n + 1);
 		}
-		Value.push_back(x.Value);
-		Weights.push_back(x.Weight);
+		Values.push_back(x.Value);
+		LogWeights.push_back(log(x.Weight + 1e-100));
 		ReachedLimit = (n + 1) >= limit;
 	}
 

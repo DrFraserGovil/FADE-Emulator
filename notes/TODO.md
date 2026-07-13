@@ -4,12 +4,17 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* TODO: Create the scoring system 
-* TODO: Basic annealing optimisation 
+* Dumb gradient descent? 
+* Dumb Laplacian 
+* Object-based save moded inc. the Laplacian 
+    * Eigen based Cholesky decomposition  
+* Object based loading for inference
+* Progress bar for training
+
 
 ### This Week's Tasks
 * TODO: Get the inference routine up 
-* TODO: Create visualisation / interface routine
+    * Both for single-sub predictions & for posterior predictives
 
 ### Longer Term Tasks 
 
@@ -19,6 +24,10 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ## Completed Taks
 
+* ~Install eigen/fetchontent~
+* ~Create visualisation / interface routine~
+* ~Create the scoring system~
+* ~Basic annealing optimisation~ 
 * ~Add a simple clusterer to the input data to allow for more efficient training~ 
 * ~Extract into a library + interface?~
 * ~Create single-model inference interface~

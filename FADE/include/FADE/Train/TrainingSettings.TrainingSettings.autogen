@@ -12,4 +12,5 @@ void FieldList(Wrapper &&W)
 	W(Field<double>(ValidationFraction, "ValidationFraction", {"validate"}, 0.2, "The fraction of training data allocated to the validation pool"));
 	W(Field<double>(ClusteringRadius, "ClusteringRadius", {"clustering-radius"}, 1e-6, "Points Closer together than this are considered at the same point in the emulation space\nThis increases the efficiency of the training, at a marginal loss in accuracy"));
 	W(Field<size_t>(MaximumClusterCount, "MaximumClusterCount", {"clustering-limit"}, 25, "The maximum number of points which are allowed to cluster together\nThis prevents excessive clustering from removing too much data, without needing to a-priori guess at a clustering radius"));
+	W(Annealing);
 }

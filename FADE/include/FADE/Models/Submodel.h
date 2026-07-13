@@ -29,14 +29,30 @@ namespace FADE
 			}
 		}
 
-		double GaussianPrediction(double y)
+		// T GaussianPrediction(double y)
+		// {
+		// 	T v = 0;
+		// 	for (sint e = 0; e < Ne; ++e)
+		// 	{
+		// 		v += ExpertWeights[e] * GaussianDistribution(y, e, Parameters);
+		// 	}
+		// 	return v;
+		// }
+		T LogGaussian(double y)
 		{
-			double v = 0;
-			for (sint e = 0; e < Ne; ++e)
+			T v = ExpertWeights[0] + LogGaussianDistribution(y, 0, Parameters);
+			for (sint e = 1; e < Ne; ++e)
 			{
-				v += ExpertWeights[e] * GaussianDistribution(y, e, Parameters);
+				v = ale(v, ExpertWeights[e] + LogGaussianDistribution(y, e, Parameters));
 			}
 			return v;
+		}
+		void AccumulateLogGaussian(double y, T &accumulator, double logweight)
+		{
+			for (sint e = 0; e < Ne; ++e)
+			{
+				accumulator = ale(accumulator, logweight + ExpertWeights[e] + LogGaussianDistribution(y, e, Parameters));
+			}
 		}
 
 		void SetPosition(std::vector<double> &x)
@@ -60,11 +76,11 @@ namespace FADE
 					if (k == 0)
 					{
 
-						ExpertWeights[i] = exp(TkExpert[i][k] - wsum + TkPos[k]);
+						ExpertWeights[i] = TkExpert[i][k] - wsum + TkPos[k];
 					}
 					else
 					{
-						ExpertWeights[i] += exp(TkExpert[i][k] - wsum + TkPos[k]);
+						ExpertWeights[i] = ale(ExpertWeights[i], (TkExpert[i][k] - wsum + TkPos[k]));
 					}
 					TkExpert[i][k] -= wsum;
 				}
@@ -120,6 +136,28 @@ namespace FADE
 			}
 			return {muSum, sqrt(vSum - muSum * muSum)};
 			// }
+		}
+
+		void Train([[maybe_unused]] std::vector<ClusteredTrains> train, [[maybe_unused]] std::vector<ClusteredTrains> validate)
+		{
+			LOG(ERROR) << "Training routine must occur on a specialised branch";
+			exit(1);
+		}
+
+		T Score(std::vector<ClusteredTrains> data)
+		{
+			SyncParameters();
+			T score = 0;
+			for (auto &cluster : data)
+			{
+				sint N = cluster.Values.size();
+				SetPosition(cluster.Position);
+				for (sint j = 0; j < N; ++j)
+				{
+					AccumulateLogGaussian(cluster.Values[j], score, cluster.LogWeights[j]);
+				}
+			}
+			return score;
 		}
 
 	  private:
@@ -179,4 +217,8 @@ namespace FADE
 			TkExpert.resize(Ne, std::vector<T>(Nd));
 		}
 	};
+
+	// specialisations
+	template <>
+	void Submodel<double>::Train(std::vector<ClusteredTrains> train, std::vector<ClusteredTrains> validate);
 } // namespace FADE

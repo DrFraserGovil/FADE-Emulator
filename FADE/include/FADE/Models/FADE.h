@@ -29,7 +29,7 @@ namespace FADE
 		void Train(std::vector<TrainingPoint> &trainingData)
 		{
 			auto [train, validate] = ProcessTrainingData(trainingData, Settings.Train.ValidationFraction, Settings.Train.ClusteringRadius, Settings.Train.MaximumClusterCount);
-			// forModelInModels([&](auto &model) { model.Save(vault); });
+			forModelInModels([&](auto &model) { model.Train(train, validate); });
 		}
 
 		Submodel<T> &operator[](std::pair<sint, sint> idx)
