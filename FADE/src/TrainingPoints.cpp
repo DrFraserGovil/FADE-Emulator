@@ -35,8 +35,10 @@ namespace FADE
 		ReachedLimit = (n + 1) >= limit;
 	}
 
-	std::pair<std::vector<ClusteredTrains>, std::vector<ClusteredTrains>> ProcessTrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize, size_t clusterLimit)
+	std::pair<std::vector<ClusteredTrains>, std::vector<ClusteredTrains>> ProcessTrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize, size_t clusterLimit, PriorSettings &prior)
 	{
+		std::vector<double> bottomLeft;
+		std::vector<double> topRight;
 		std::vector<ClusteredTrains> train;
 		std::vector<ClusteredTrains> validate;
 		sint tcount = 0;
@@ -44,6 +46,26 @@ namespace FADE
 		srand(time(NULL));
 		for (sint i = 0; i < data.size(); ++i)
 		{
+			if (i == 0)
+			{
+				bottomLeft = data[i].Position;
+				topRight = data[i].Position;
+			}
+			else
+			{
+				for (sint j = 0; j < bottomLeft.size(); ++j)
+				{
+					double xj = data[i].Position[j];
+					if (xj < bottomLeft[j])
+					{
+						bottomLeft[j] = xj;
+					}
+					if (xj > topRight[j])
+					{
+						topRight[j] = xj;
+					}
+				}
+			}
 			double r = rand() * 1.0 / RAND_MAX;
 			std::vector<ClusteredTrains> *group;
 			if (r > fraction)
@@ -79,7 +101,16 @@ namespace FADE
 		LOG(INFO) << "The data has been clustered into:\n"
 				  << "\t" << train.size() << " training clusters containing " << tcount << " datapoints.\n"
 				  << "\t" << validate.size() << " validation clusters containing " << vcount << " datapoints.";
-
+		if (prior.PriorBottomLeft.size() != bottomLeft.size())
+		{
+			prior.PriorBottomLeft = bottomLeft;
+			LOG(INFO) << "The BL-bound has been infered to be " << bottomLeft;
+		}
+		if (prior.PriorTopRight.size() != topRight.size())
+		{
+			prior.PriorTopRight = topRight;
+			LOG(INFO) << "The TR-bound has been infered to be " << topRight;
+		}
 		return {train, validate};
 	}
 } // namespace FADE

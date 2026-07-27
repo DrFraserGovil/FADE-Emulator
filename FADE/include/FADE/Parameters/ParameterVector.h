@@ -1,6 +1,7 @@
 #pragma once
 #include <FADE/Parameters/HyperSettings.h>
 #include <JSL/IO/Vault/VaultWriter.h>
+#include <JSL/Log.h>
 #include <JSL/Strings.h>
 #include <cassert>
 #include <string>
@@ -58,6 +59,10 @@ namespace FADE
 
 			return Params[PhiStart + MatrixSize * department + idx];
 		}
+		T &Phi(sint department, sint i)
+		{
+			return Params[PhiStart + MatrixSize * department + i];
+		}
 		T &L(sint department, sint i, sint j)
 		{
 			assert(i >= j);
@@ -73,37 +78,16 @@ namespace FADE
 			}
 		}
 
-		/*
-			void SetExpertPosition(sint expert, std::vector<double> pos)
-			{
-				assert(pos.size() == Hyper.InputDimension);
-				assert(expert < Ne);
-				for (sint j = 0; j < Hyper.InputDimension; ++j)
-				{
-					ExpertPosition(expert, j) = pos[j];
-				}
-			}
-
-			void SetDepartmentPosition(sint dep, std::vector<double> pos)
-			{
-				assert(pos.size() == Hyper.InputDimension);
-				assert(dep < Nd);
-				for (sint j = 0; j < Hyper.InputDimension; ++j)
-				{
-					DepPosition(dep, j) = pos[j];
-				}
-			}
-		*/
 		std::vector<T> Params;
 
+		sint MatrixSize;  // InputDimension *(InputDimension + 1)/2
+		sint ExpertStart; // PhiStart + MatrixSize * Nd
 	  private:
 		sint TotalSize;
 		std::vector<T> Lks;
 		sint LooseParam = 0;
-		sint MatrixSize;  // InputDimension *(InputDimension + 1)/2
-		sint PhiStart;	  // Hyper.InputDimension * Nd
-		sint ExpertStart; // PhiStart + MatrixSize * Nd
-		sint DistStart;	  // ExpertStart + Ne * Hyper.InputDimension
+		sint PhiStart;	// Hyper.InputDimension * Nd
+		sint DistStart; // ExpertStart + Ne * Hyper.InputDimension
 		HyperSettings &Hyper;
 		sint Ne;
 		sint Nd;

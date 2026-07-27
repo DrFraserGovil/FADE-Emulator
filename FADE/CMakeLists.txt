@@ -37,6 +37,7 @@ else()
 	FetchContent_MakeAvailable(JSL)
 endif()
 
+target_link_libraries(FADE PUBLIC JSL)
 ### EIGEN
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
@@ -51,8 +52,7 @@ FetchContent_MakeAvailable(Eigen)
 
 
 
-
-target_link_libraries(FADE PUBLIC JSL PRIVATE Eigen3::Eigen)
+target_link_libraries(FADE PUBLIC Eigen3::Eigen)
 
 
 

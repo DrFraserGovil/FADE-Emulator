@@ -4,13 +4,11 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* Dumb gradient descent? 
 * Dumb Laplacian 
 * Object-based save moded inc. the Laplacian 
     * Eigen based Cholesky decomposition  
-* Object based loading for inference
+    * Object based loading for inference
 * Progress bar for training
-
 
 ### This Week's Tasks
 * TODO: Get the inference routine up 
@@ -24,6 +22,8 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ## Completed Taks
 
+* ~Parallelised training?~ 
+* ~Dumb gradient descent?~ 
 * ~Install eigen/fetchontent~
 * ~Create visualisation / interface routine~
 * ~Create the scoring system~

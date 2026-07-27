@@ -13,7 +13,7 @@ class HyperParameters
   public:
 	sint InputDimension = 1;
 	sint OutputDimension = 1;
-	sint ProbabilityDimension = 2;
+	sint ProbabilityDimension = 3;
 	sint MatrixSize;
 
 	sint MaxNd;

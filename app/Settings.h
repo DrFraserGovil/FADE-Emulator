@@ -1,6 +1,7 @@
 #include <FADE/ModelSettings.h>
 #include <JSL/Interface/Aggregator.h>
 #include <filesystem>
+#include <set>
 //! @name Basic Settings
 //! @command test Enters the testing mode for basic diagnostics
 //! @command train Activates training mode
@@ -26,6 +27,18 @@ class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 	//! @alias settings
 	//! @brief If set, this value is used to save the value of the configuration file
 	std::optional<std::string> ExportFile = std::nullopt;
+
+	//! @alias parallel N
+	//! @brief The number of parallel threads that can be spawned in addition to the main thread.
+	size_t ParallelThreads = 0;
+
+	//! @alias The location that query data is saved to
+	//! @alias query-out
+	std::filesystem::path QueryOut = "QueryOutput.dat";
+
+	//! @brief The query resolution in y-space
+	//! @alias query-resolution r resolution
+	size_t Resolution = 100;
 #include "Settings.AppSettings.autogen"
 };
 

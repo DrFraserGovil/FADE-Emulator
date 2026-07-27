@@ -60,5 +60,5 @@ void TrainModel(std::set<std::filesystem::path> paths)
 	LOG(INFO) << "Creating model instance";
 	FADE::Model<double> Model(Settings.Model);
 
-	Model.Train(data);
+	Model.Train(data, Settings.ParallelThreads);
 }

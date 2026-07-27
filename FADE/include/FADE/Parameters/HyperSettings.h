@@ -28,6 +28,6 @@ class HyperSettings : public Aggregator<HyperSettings>
 	size_t OutputDimension = 1;
 
 	size_t MatrixSize;
-	size_t ProbabilityDimension;
+	size_t ProbabilityDimension = 3;
 #include "HyperSettings.HyperSettings.autogen"
 };

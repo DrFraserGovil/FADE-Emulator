@@ -1,4 +1,5 @@
 #pragma once
+#include <FADE/Distributions/PriorSettings.h>
 #include <vector>
 namespace FADE
 {
@@ -31,5 +32,5 @@ namespace FADE
 		void Add(TrainingPoint &x, size_t limit);
 	};
 
-	std::pair<std::vector<ClusteredTrains>, std::vector<ClusteredTrains>> ProcessTrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize, size_t clusterLimit);
+	std::pair<std::vector<ClusteredTrains>, std::vector<ClusteredTrains>> ProcessTrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize, size_t clusterLimit, PriorSettings &prior);
 } // namespace FADE

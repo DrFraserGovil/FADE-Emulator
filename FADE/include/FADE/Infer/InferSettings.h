@@ -11,7 +11,6 @@ namespace FADE
 		//! @alias model, m
 		std::optional<std::filesystem::path> ModelFile = std::nullopt;
 
-		size_t Resolution = 100;
 #include "InferSettings.InferenceSettings.autogen"
 	};
 } // namespace FADE
