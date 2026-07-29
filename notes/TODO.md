@@ -4,24 +4,28 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* Dumb Laplacian 
-* Object-based save moded inc. the Laplacian 
-    * Eigen based Cholesky decomposition  
-    * Object based loading for inference
-* Progress bar for training
+* TODO: BLP integration 
+* TODO: Bin discretise for way faster training? 
 
-### This Week's Tasks
-* TODO: Get the inference routine up 
-    * Both for single-sub predictions & for posterior predictives
 
 ### Longer Term Tasks 
 
 * TODO: Bones of the more intelligent optimiser
 * TODO: Documentation setup
+* TODO: Full posterior predictive distribution
 
 
 ## Completed Taks
 
+
+* ~Model shift to parameter interpolation~
+* ~Rewrite in pure double mode: abandon the nice notion of the duals for now~
+* ~Train-reloader~
+* ~Dumb Laplacian~
+* ~Object-based save moded inc. the Laplacian~
+* ~Eigen based Cholesky decomposition~  
+* Object based loading for inference
+* Progress bar for training
 * ~Parallelised training?~ 
 * ~Dumb gradient descent?~ 
 * ~Install eigen/fetchontent~

@@ -108,7 +108,10 @@ int main(int argc, char **argv)
 			Predict(Settings.Files);
 			break;
 		case Mode::Unpack:
-			Unpack(Settings.Files);
+			UnpackData(Settings.Files);
+			break;
+		case Mode::Test:
+			TestModel();
 			break;
 		default:
 			LOG(ERROR) << "Mode not yet implemented";

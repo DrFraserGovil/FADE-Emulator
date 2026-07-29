@@ -5,11 +5,15 @@ BUILD_DIR = .build
 
 # 1. The default target: ensures .build exists, runs cmake, then builds
 
+MIRROR_FLAGS ?= -vf
+MAKEFLAGS += --no-print-directory
 
 all:
-	@make mirror
-	@mkdir -p $(BUILD_DIR)
-	@cmake -S . -B $(BUILD_DIR) -DFORCE_JSL_CLONE=OFF
+	@$(MAKE) mirror MIRROR_FLAGS=-fq
+	@if [ ! -d "$(BUILD_DIR)" ]; then \
+		mkdir -p $(BUILD_DIR); \
+		cmake -S . -B $(BUILD_DIR) -DFORCE_JSL_CLONE=OFF; \
+	fi
 	@cmake --build $(BUILD_DIR) --target FADE -- --no-print-directory
 
 mirror:

@@ -1,4 +1,5 @@
 #pragma once
+#include "FADE/Distributions/PriorSettings.h"
 #include <FADE/Parameters/HyperSettings.h>
 #include <JSL/IO/Vault/VaultWriter.h>
 #include <JSL/Log.h>
@@ -9,113 +10,92 @@
 namespace FADE
 {
 	typedef size_t sint;
-	template <class T = double>
 	class ParameterVector
 	{
 	  public:
-		ParameterVector(HyperSettings &hyper, sint departmentCount, sint expertCount) : Hyper(hyper)
-		{
-			Ne = expertCount;
-			Nd = departmentCount;
-			DeriveDimensions();
-		}
+		ParameterVector(HyperSettings &hyper, sint departmentCount, sint expertCount);
 
-		sint Size() { return Params.size(); }
+		sint Size();
 
-		void UpdateDerived()
-		{
-			DeriveDimensions();
-			ConvertMatrix();
-		}
-		std::string ToString()
-		{
-			std::ostringstream os;
-			for (auto &p : Params)
-			{
-				os << p << "\n";
-			}
-			return os.str();
-		}
+		void UpdateDerived();
+
+		std::string ToString();
+
 		/////////////////////
 		/// ACCESS FUNCTIONS
 		/////////////////////
-		T &ExpertPosition(sint expert, sint index)
+		double &ExpertPosition(sint expert, sint index)
 		{
 			return Params[ExpertStart + (Hyper.InputDimension * expert) + index];
 		}
-		T &ExpertParameter(sint expert, sint index)
+		// double &ExpertParameter(sint expert, sint index)
+		// {
+		// 	return Params[DistStart + (Hyper.ProbabilityDimension * expert) + index];
+		// }
+		double &ExpertPi(sint expert, sint mode)
 		{
-			return Params[DistStart + (Hyper.ProbabilityDimension * expert) + index];
+			sint offset = Hyper.ProbabilityDimension * (Hyper.ModeCount * expert + mode);
+			return Params[DistStart + offset + 0];
 		}
-
-		T &DepPosition(sint department, sint index)
+		double &ExpertMu(sint expert, sint mode)
+		{
+			sint offset = Hyper.ProbabilityDimension * (Hyper.ModeCount * expert + mode);
+			return Params[DistStart + offset + 1];
+		}
+		double &ExpertV(sint expert, sint mode)
+		{
+			sint offset = Hyper.ProbabilityDimension * (Hyper.ModeCount * expert + mode);
+			return Params[DistStart + offset + 2];
+		}
+		double &ExpertScale(sint expert)
+		{
+			return Params[ScaleStart + expert];
+		}
+		double &DepPosition(sint department, sint index)
 		{
 			return Params[LooseParam + (Hyper.InputDimension * department) + index];
 		}
-		T &Phi(sint department, sint i, sint j)
+		double &Phi(sint department, sint i, sint j)
 		{
 			assert(i >= j);
 			sint idx = (i + 1) * i / 2 + j;
 
 			return Params[PhiStart + MatrixSize * department + idx];
 		}
-		T &Phi(sint department, sint i)
+		double &Phi(sint department, sint i)
 		{
 			return Params[PhiStart + MatrixSize * department + i];
 		}
-		T &L(sint department, sint i, sint j)
+		double &L(sint department, sint i, sint j)
 		{
 			assert(i >= j);
 			sint idx = (i + 1) * i / 2 + j;
 			return Lks[MatrixSize * department + idx];
 		}
 
-		void Load(std::vector<std::string> &fileData)
-		{
-			for (sint i = 0; i < TotalSize; ++i)
-			{
-				Params[i] = JSL::String::ParseTo<double>(fileData[i]);
-			}
-		}
+		void Load(std::vector<std::string> &fileData);
 
-		std::vector<T> Params;
+		void Randomise(PriorSettings &prior);
 
+		HyperSettings &Hyper;
+
+		void Copy(const ParameterVector &origin);
+
+		std::vector<double> Params;
+
+	  private:
 		sint MatrixSize;  // InputDimension *(InputDimension + 1)/2
 		sint ExpertStart; // PhiStart + MatrixSize * Nd
-	  private:
 		sint TotalSize;
-		std::vector<T> Lks;
+		std::vector<double> Lks;
 		sint LooseParam = 0;
+		sint ScaleStart = 0;
 		sint PhiStart;	// Hyper.InputDimension * Nd
 		sint DistStart; // ExpertStart + Ne * Hyper.InputDimension
-		HyperSettings &Hyper;
 		sint Ne;
 		sint Nd;
-		void DeriveDimensions()
-		{
-			MatrixSize = Hyper.InputDimension * (Hyper.InputDimension + 1) / 2;
+		void DeriveDimensions();
 
-			TotalSize = (MatrixSize + Hyper.InputDimension) * Nd + (Hyper.InputDimension + Hyper.ProbabilityDimension) * Ne;
-			Params.resize(TotalSize, 0);
-			PhiStart = LooseParam + Hyper.InputDimension * Nd;
-			ExpertStart = PhiStart + MatrixSize * Nd;
-			DistStart = ExpertStart + Ne * Hyper.InputDimension;
-			Lks.resize(MatrixSize * Nd, 0);
-		}
-
-		void ConvertMatrix()
-		{
-			for (sint k = 0; k < Nd; ++k)
-			{
-				for (sint i = 0; i < Hyper.InputDimension; ++i)
-				{
-					for (sint j = 0; j < i; ++j)
-					{
-						L(k, i, j) = Phi(k, i, j);
-					}
-					L(k, i, i) = exp(Phi(k, i, i));
-				}
-			}
-		}
+		void ConvertMatrix();
 	};
 } // namespace FADE
