@@ -1,224 +1,77 @@
 #pragma once
 
-#include <FADE/Distributions/Distribution.h>
-#include <FADE/Distributions/Kernels.h>
+#include <Eigen/Dense>
 #include <FADE/ModelSettings.h>
 #include <FADE/Parameters/ParameterVector.h>
-#include <FADE/Train/TrainingPoint.h>
-#include <JSL.h>
+#include <FADE/Train/TrainingCache.h>
+#include <FADE/Train/TrainingData.h>
+#include <JSL/IO/Vault.h>
+#include <functional>
 namespace FADE
 {
 
-	template <class T = double>
 	class Submodel
 	{
 	  public:
-		Submodel(ModelSettings &parentSettings, sint depCount, sint expertCount) : Parameters(parentSettings.Hyper, depCount, expertCount), Settings(parentSettings)
-		{
-			Ne = expertCount;
-			Nd = depCount;
-			LOG(DEBUG) << "  - Constructing submodel " << Nd << "-" << Ne;
-			SetSizes();
-		}
-		void SyncParameters()
-		{
-			Parameters.UpdateDerived();
-			for (sint i = 0; i < Ne; ++i)
-			{
-				ComputeTkFromVec([&](sint j) -> T & { return Parameters.ExpertPosition(i, j); }, TkExpert[i]);
-			}
-		}
+		Submodel(ModelSettings &parentSettings, sint depCount, sint expertCount);
 
-		// T GaussianPrediction(double y)
-		// {
-		// 	T v = 0;
-		// 	for (sint e = 0; e < Ne; ++e)
-		// 	{
-		// 		v += ExpertWeights[e] * GaussianDistribution(y, e, Parameters);
-		// 	}
-		// 	return v;
-		// }
-		T LogGaussian(double y)
-		{
-			T v = ExpertWeights[0] + LogGaussianDistribution(y, 0, Parameters);
-			for (sint e = 1; e < Ne; ++e)
-			{
-				v = ale(v, ExpertWeights[e] + LogGaussianDistribution(y, e, Parameters));
-			}
-			return v;
-		}
-		void AccumulateLogGaussian(double y, T &accumulator, double logweight)
-		{
-			for (sint e = 0; e < Ne; ++e)
-			{
-				accumulator = ale(accumulator, logweight + ExpertWeights[e] + LogGaussianDistribution(y, e, Parameters));
-			}
-		}
+		//! @brief Sets the internal cache values that can be determined solely from expert/department positions
+		void SyncParameters();
 
-		void SetPosition(std::vector<double> &x)
-		{
-			ComputeTkFromVec([&x](sint i) -> double & { return x[i]; }, TkPos);
-			for (sint k = 0; k < Nd; ++k)
-			{
-				T wsum = 0;
-				for (sint i = 0; i < Ne; ++i)
-				{
-					T dk = ComputeDistance([&x](sint idx) -> double & { return x[idx]; }, [&](sint idx) -> T & { return Parameters.ExpertPosition(i, idx); }, k);
-					TkExpert[i][k] += LogKernel(dk, 1);
-					if (i == 0) { wsum = TkExpert[i][k]; }
-					else
-					{
-						wsum = ale(wsum, TkExpert[i][k]);
-					}
-				}
-				for (sint i = 0; i < Ne; ++i)
-				{
-					if (k == 0)
-					{
+		void SetPosition(const std::vector<double> &x);
+		// void CopyPosition(Submodel &model);
 
-						ExpertWeights[i] = TkExpert[i][k] - wsum + TkPos[k];
-					}
-					else
-					{
-						ExpertWeights[i] = ale(ExpertWeights[i], (TkExpert[i][k] - wsum + TkPos[k]));
-					}
-					TkExpert[i][k] -= wsum;
-				}
-			}
-		}
+		double LogGaussian(double y);
 
-		void Save(JSL::IO::VaultWriter &vault)
-		{
-			std::string param = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne) + ".param";
+		void Save(JSL::IO::VaultWriter &vault);
 
-			// std::string param = root + "/vector.param";
-			vault[param] << Parameters.ToString();
-		}
+		void Load(JSL::IO::VaultReader &vault);
 
-		void Load(JSL::IO::VaultReader &vault)
-		{
-			Parameters.UpdateDerived();
-			std::string param = "model_d" + JSL::String::makeFrom(Nd) + "_e" + JSL::String::makeFrom(Ne) + ".param";
-			if (!vault.Files().contains(param))
-			{
-				LOG(ERROR) << "Provided input is missing a submodel entry for " << param << ", despite the metadata indicating it exists.\nThe model is most likely corrupted";
-				exit(1);
-			}
-			LOG(DEBUG) << "  - Loading submodel " << param << " from file";
-			auto lines = vault[param].AsLines();
-			if (lines.size() != Parameters.Size())
-			{
-				LOG(ERROR) << "Dimensional mismatch between model on disk and submodel (" << Nd << ", " << Ne << ")\n"
-						   << "Either the model is corrupted, or it is not compatible with this version of FADE.";
-				exit(1);
-			}
-			else
-			{
-				Parameters.Load(lines);
-			}
-		}
+		ParameterVector Parameters;
 
-		ParameterVector<T> Parameters;
+		void Train(TrainingData &data);
 
-		std::pair<T, T> EstimateMoments()
-		{
-			// if (Settings.Hyper.Family == "gaussian")
-			// {
-			T muSum = 0;
-			T vSum = 0;
-			for (sint e = 0; e < Nd; ++e)
-			{
-				T &mu = Parameters.ExpertParameter(e, 0);
-				T &sigma = Parameters.ExpertParameter(e, 1);
+		double Score(TrainingData &data, bool validationNotTraining = false);
 
-				muSum += ExpertWeights[e] * mu;
-				vSum += ExpertWeights[e] * (sigma * sigma + mu * mu);
-			}
-			return {muSum, sqrt(vSum - muSum * muSum)};
-			// }
-		}
-
-		void Train([[maybe_unused]] std::vector<ClusteredTrains> train, [[maybe_unused]] std::vector<ClusteredTrains> validate)
-		{
-			LOG(ERROR) << "Training routine must occur on a specialised branch";
-			exit(1);
-		}
-
-		T Score(std::vector<ClusteredTrains> data)
-		{
-			SyncParameters();
-			T score = 0;
-			for (auto &cluster : data)
-			{
-				sint N = cluster.Values.size();
-				SetPosition(cluster.Position);
-				for (sint j = 0; j < N; ++j)
-				{
-					AccumulateLogGaussian(cluster.Values[j], score, cluster.LogWeights[j]);
-				}
-			}
-			return score;
-		}
+		// double CutPrior();
+		// double Prior();
+		std::vector<double> QueryExperts(std::vector<double> pos);
 
 	  private:
-		T mean;
-		T variance;
+		double BestScore;
 		ModelSettings &Settings;
-		std::vector<T> TkPos;
-		std::vector<std::vector<T>> TkExpert;
+		std::vector<double> LogQueryDepartmentWeight;
+		std::vector<std::vector<double>> LogExpertDepartmentWeight;
+		std::vector<std::vector<double>> LogPerDepartmentExpertWeights;
 
-		template <class A, class B>
-		T ComputeDistance(A a, B b, size_t dep)
-		{
-			T dk = 0;
-			for (sint ni = 0; ni < Settings.Hyper.InputDimension; ++ni)
-			{
-				double Ld_i = 0;
-				for (sint nj = ni; nj < Settings.Hyper.InputDimension; ++nj)
-				{
-					Ld_i += (a(nj) - b(nj)) * Parameters.L(dep, nj, ni);
-				}
+		std::vector<double> Mus;
+		std::vector<double> Pis;
+		std::vector<double> Vrs;
 
-				dk += Ld_i * Ld_i;
-			}
-			return dk;
-		}
-		template <class U>
-		void ComputeTkFromVec(U setOfVectors, std::vector<T> &output)
-		{
-			T sum = 0;
-			for (sint k = 0; k < Nd; ++k)
-			{
-				T dk = ComputeDistance(setOfVectors, [&](size_t idx) { return Parameters.DepPosition(k, idx); }, k);
-				output[k] = LogKernel(dk, 1);
-				if (k == 0)
-				{
-					sum = output[k];
-				}
-				else
-				{
-					sum = ale(sum, output[k]);
-				}
-			}
-			// then normalise the Tks
-			// whilst keeping them in log space
-			for (sint k = 0; k < Nd; ++k)
-			{
-				output[k] -= sum;
-			}
-		}
-		std::vector<T> ExpertWeights;
-		sint Nd;
-		sint Ne;
-		void SetSizes()
-		{
-			TkPos.resize(Nd);
-			ExpertWeights.resize(Ne);
-			TkExpert.resize(Ne, std::vector<T>(Nd));
-		}
+		void EMFit(TrainingData &data, sint steps, double earlyStopThreshold);
+
+		double ComputeDistance(std::function<double(sint)> a, std::function<double(sint)> b, size_t dep);
+		std::vector<double> ExpertWeights;
+		const sint Nd;
+		const sint Ne;
+		std::vector<TrainCache> Cache;
+		void SetSizes();
+
+		// void ComputeDecomp(Eigen::MatrixXd &Hessian);
+		void CacheQueryDep(const std::vector<double> &pos);
+		void CacheQueryWik(const std::vector<double> &pos);
+		void CacheExpertDep();
+		void CacheExpertWeights();
+		void CacheParameters();
+
+		void CreateTrainingCache(TrainingData &data);
+		void EPhase(TrainingData &data);
+		void MPhase_Mu(TrainingData &data);
+		void MPhase_Weights(TrainingData &data);
+		void MPhase_Vars(TrainingData &data);
+		Eigen::VectorXd bVec;
+		Eigen::MatrixXd muMatrix;
+		std::vector<double> Cvec;
 	};
 
-	// specialisations
-	template <>
-	void Submodel<double>::Train(std::vector<ClusteredTrains> train, std::vector<ClusteredTrains> validate);
 } // namespace FADE

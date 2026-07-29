@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # #find all source files
-file(GLOB_RECURSE ALL_SOURCES "src/*.cpp")
+file(GLOB_RECURSE ALL_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 add_library(FADE STATIC ${ALL_SOURCES})
 target_compile_options(FADE PRIVATE -Wall -Wextra)
  
@@ -37,9 +37,11 @@ else()
 	FetchContent_MakeAvailable(JSL)
 endif()
 
+target_link_libraries(FADE PUBLIC JSL)
 ### EIGEN
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(EIGEN_BUILD_PKGCONFIG OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
@@ -51,8 +53,7 @@ FetchContent_MakeAvailable(Eigen)
 
 
 
-
-target_link_libraries(FADE PUBLIC JSL PRIVATE Eigen3::Eigen)
+target_link_libraries(FADE PUBLIC Eigen3::Eigen)
 
 
 

@@ -2,41 +2,57 @@
 #include "../modes.h"
 #include "FADE/Infer/InferPoint.h"
 #include <FADE/ModelSettings.h>
-#include <FADE/Models/FADE.h>
+#include <FADE/Models/Model.h>
 #include <FADE/Train/Train.h>
 #include <JSL.h>
-#include <vector>
+#include <optional>
+
+bool isVault(std::string path)
+{
+	try
+	{
+		auto v = JSL::IO::VaultReader(path);
+		if (JSL::Vector::contains(v.Files(), "train.config"))
+		{
+			return true;
+		}
+	}
+	catch (...)
+	{
+		LOG(DEBUG) << path << " failed modelfile checks";
+	}
+	return false;
+}
+
 std::filesystem::path findModel(std::optional<std::filesystem::path> modelfile, std::set<std::filesystem::path> &files)
 {
 	std::filesystem::path out;
 	bool needsErase = false;
 	if (modelfile)
 	{
+
 		out = modelfile.value();
+		if (!isVault(out))
+		{
+			LOG(ERROR) << out << " passed as --model flag, but is not a valid model file";
+			exit(1);
+		}
 	}
 	else
 	{
 		LOG(INFO) << "No " << JSL::Display::Italics() << "model" << JSL::Display::Italics(false) << " key passed to settings\n\tSearching through the input files for a valid model";
 		for (auto file : files)
 		{
-			try
+			if (isVault(file))
 			{
-				auto v = JSL::IO::VaultReader(file.string());
-				if (JSL::Vector::contains(v.Files(), "train.config"))
+				if (!out.empty())
 				{
-					if (!out.empty())
-					{
-						LOG(ERROR) << "Multiple model files passed at once (" << file.string() << ", " << out.string() << "). Choose one.";
-						exit(1);
-					}
-					LOG(DEBUG) << file << " passed modelfile checks";
-					out = file;
-					needsErase = true;
+					LOG(ERROR) << "Multiple model files passed at once (" << file.string() << ", " << out.string() << "). Choose one.";
+					exit(1);
 				}
-			}
-			catch (...)
-			{
-				LOG(DEBUG) << file << " failed modelfile checks";
+				LOG(DEBUG) << file << " passed modelfile checks";
+				out = file;
+				needsErase = true;
 			}
 		}
 	}
@@ -55,12 +71,12 @@ std::filesystem::path findModel(std::optional<std::filesystem::path> modelfile, 
 	LOG(INFO) << "Loading model data from " << out.string();
 	return out;
 }
-std::map<std::vector<double>, FADE::QueryPoint> GetQueries()
+std::set<FADE::QueryPoint> GetQueries()
 {
 	LOG(INFO) << "Loading query points";
 
 	auto tmp = JSL::Log::Indent(); // increases indent level until Infer is over
-	std::map<std::vector<double>, QueryPoint> out;
+	std::set<QueryPoint> out;
 	for (auto &f : Settings.Files)
 	{
 		LOG(INFO) << "Searching " << f.string();
@@ -71,19 +87,22 @@ std::map<std::vector<double>, FADE::QueryPoint> GetQueries()
 				auto vec = JSL::String::ParseTo<std::vector<double>>(line, " ");
 				if (vec.size() == N)
 				{
-					if (out.contains(vec))
+					if (out.contains({vec, {}, {}}))
 					{
 						LOG(WARN) << "Duplicate queries for " << vec << " detected; defaulting to moment-based range";
 					}
-					out[vec] = {vec, {}};
+					QueryPoint qp{vec, {}, {}};
+					out.insert(qp);
 				}
 				else
 				{
 					if (vec.size() == N + 2)
 					{
 						std::vector<double> p{std::move(vec[vec.size() - 2]), std::move(vec.back())};
+						auto grid = JSL::Vector::range(p[0], p[1], Settings.Resolution);
 						vec.resize(vec.size() - 2);
-						out[vec] = {vec, p};
+						out.insert({vec, grid, {}});
+						// out[vec] = {vec, p};
 					}
 					else
 					{
@@ -115,10 +134,87 @@ void Predict(std::set<std::filesystem::path> paths)
 	auto mfile = findModel(Settings.Model.Infer.ModelFile, paths);
 
 	LOG(INFO) << "Spooling up model from " << mfile.string();
-	FADE::Model<double> model(Settings.Model);
+	FADE::Model model(Settings.Model);
+	Settings.Model = model.GetSettings();
+	std::set<QueryPoint> out = GetQueries();
 
-	auto out = GetQueries();
+	bool haveWarned = false;
+	for (auto &p : out)
+	{
+		if (p.PredictionGrid.empty())
+		{
+			if (!haveWarned)
+			{
+				LOG(WARN) << "Adaptive grid sizes are not yet supported; defaulting to a preset grid";
+				haveWarned = true;
+			}
+			p.PredictionGrid = JSL::Vector::range(-0.1, 1.5, Settings.Resolution);
+		}
+	}
 
-	LOG(ERROR) << "Prediction not yet fully implemented";
-	exit(1);
+	model.Predict(out);
+
+	auto nd = Settings.Model.Hyper.Departments;
+	auto ne = Settings.Model.Hyper.Experts;
+	for (sint k = nd.first; k <= nd.second; ++k)
+	{
+		for (sint i = ne.first; i <= ne.second; ++i)
+		{
+			auto file = Settings.QueryOut;
+			auto ext = file.extension();
+			file.replace_extension("");
+			file = file.string() + "_" + std::to_string(k) + "_" + std::to_string(i) + ext.string();
+			auto stream = JSL::IO::openStream(file);
+
+			for (auto &q : out)
+			{
+				stream << "New query: " << q.EmulationPoint[0];
+				for (sint r = 1; r < q.EmulationPoint.size(); ++r)
+				{
+					stream << " " << q.EmulationPoint[r];
+				}
+				stream << "\n";
+				stream << q.PredictionGrid[0];
+				sint N = q.PredictionGrid.size();
+				for (sint r = 1; r < N; ++r)
+				{
+					stream << " " << q.PredictionGrid[r];
+				}
+				auto &pred = q.SubmodelValues[{k, i}];
+				N = pred.size();
+				stream << "\n"
+					   << pred[0];
+				for (sint r = 1; r < N; ++r)
+				{
+					stream << " " << pred[r];
+				}
+				stream << "\n";
+			}
+			stream.close();
+		}
+	}
+	// for (auto &q : out)
+	// {
+	// 	stream << "New query: " << q.EmulationPoint[0];
+	// 	for (sint r = 1; r < q.EmulationPoint.size(); ++r)
+	// 	{
+	// 		stream << " " << q.EmulationPoint[r];
+	// 	}
+	// 	stream << "\n";
+	// 	stream << q.PredictionGrid[0];
+	// 	sint N = q.PredictionGrid.size();
+	// 	for (sint r = 1; r < N; ++r)
+	// 	{
+	// 		stream << " " << q.PredictionGrid[r];
+	// 	}
+	// 	N = q.PredictionValues.size();
+	// 	stream << "\n"
+	// 		   << q.PredictionValues[0];
+	// 	for (sint r = 1; r < N; ++r)
+	// 	{
+	// 		stream << " " << q.PredictionValues[r];
+	// 	}
+	// 	stream << "\n";
+	// }
+	// stream.close();
 }

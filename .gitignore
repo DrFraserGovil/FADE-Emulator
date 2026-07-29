@@ -4,7 +4,9 @@
 fade
 *.fde
 *.tst
-
+test/
+synthetic
+*.dat
 ######### Standard CPP ignores
 
 
