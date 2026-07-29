@@ -48,6 +48,8 @@ namespace FADE
 		std::vector<double> Pis;
 		std::vector<double> Vrs;
 
+		void EMFit();
+
 		double ComputeDistance(std::function<double(sint)> a, std::function<double(sint)> b, size_t dep);
 		std::vector<double> ExpertWeights;
 		const sint Nd;

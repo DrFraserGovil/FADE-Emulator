@@ -1,4 +1,5 @@
 #pragma once
+#include "FADE/Distributions/PriorSettings.h"
 #include <FADE/Parameters/HyperSettings.h>
 #include <JSL/IO/Vault/VaultWriter.h>
 #include <JSL/Log.h>
@@ -46,7 +47,10 @@ namespace FADE
 			sint offset = Hyper.ProbabilityDimension * (Hyper.ModeCount * expert + mode);
 			return Params[DistStart + offset + 2];
 		}
-
+		double &ExpertScale(sint expert)
+		{
+			return Params[ScaleStart + expert];
+		}
 		double &DepPosition(sint department, sint index)
 		{
 			return Params[LooseParam + (Hyper.InputDimension * department) + index];
@@ -71,7 +75,7 @@ namespace FADE
 
 		void Load(std::vector<std::string> &fileData);
 
-		void Randomise();
+		void Randomise(PriorSettings &prior);
 
 	  private:
 		std::vector<double> Params;
@@ -81,6 +85,7 @@ namespace FADE
 		sint TotalSize;
 		std::vector<double> Lks;
 		sint LooseParam = 0;
+		sint ScaleStart = 0;
 		sint PhiStart;	// Hyper.InputDimension * Nd
 		sint DistStart; // ExpertStart + Ne * Hyper.InputDimension
 		HyperSettings &Hyper;

@@ -19,9 +19,10 @@ namespace FADE
 
 		ModelSettings GetSettings();
 		// void Predict()
+		std::map<std::pair<sint, sint>, Submodel> Models;
+
 	  private:
 		ModelSettings Settings;
-		std::map<std::pair<sint, sint>, Submodel> Models;
 
 		template <class U>
 		void forAllModels(U callback)

@@ -16,7 +16,25 @@ namespace FADE
 	}
 	void Model::Train([[maybe_unused]] TrainingData &data, [[maybe_unused]] sint extraThreads)
 	{
-		LOG(ERROR) << "No training occurs yet. This is a placeholder";
+		auto [bottomLeft, topRight] = data.GetBounds();
+		if (Settings.Prior.PriorBottomLeft.size() != bottomLeft.size())
+		{
+			Settings.Prior.PriorBottomLeft = bottomLeft;
+			LOG(INFO) << "The BL-bound has been infered to be " << bottomLeft;
+		}
+		if (Settings.Prior.PriorTopRight.size() != topRight.size())
+		{
+			Settings.Prior.PriorTopRight = topRight;
+			LOG(INFO) << "The TR-bound has been infered to be " << topRight;
+		}
+
+		// i.e. if we didn't just load in a pre-existing  model
+		if (!Settings.Infer.ModelFile)
+		{
+			forAllModels([&](auto &model) { model.Parameters.Randomise(Settings.Prior); });
+		}
+
+		forAllModels([&](auto &model) { model.Train(data); });
 
 		Save();
 	}

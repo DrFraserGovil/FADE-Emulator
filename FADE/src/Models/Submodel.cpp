@@ -8,7 +8,8 @@ namespace FADE
 	{
 		LOG(DEBUG) << "Constructing submodel (" << nd << ", " << ne << ")";
 		SetSizes();
-		Parameters.Randomise();
+		Parameters.Randomise(Settings.Prior);
+		SyncParameters();
 	}
 	void Submodel::SyncParameters()
 	{
@@ -180,7 +181,7 @@ namespace FADE
 			for (sint i = 0; i < Ne; ++i)
 			{
 				auto dist = ComputeDistance([&](sint idx) { return Parameters.ExpertPosition(i, idx); }, [&](sint idx) { return pos[idx]; }, k);
-				double scale = 2; //  HACK: This needs to be a configurable parameter -- we've chosen it so that the expert scale is always larger than the department scale (since the overall scale is scale/|detG_k|
+				double scale = Parameters.ExpertScale(i);
 				double term = LogGaussianKernel(dist, scale);
 				if (i == 0)
 				{
@@ -240,6 +241,7 @@ namespace FADE
 		for (sint i = 0; i < Ne; ++i)
 		{
 			double s = LogQueryDepartmentWeight[0] + LogPerDepartmentExpertWeights[i][0];
+
 			for (sint k = 1; k < Nd; ++k)
 			{
 				s = ale(s, LogQueryDepartmentWeight[k] + LogPerDepartmentExpertWeights[i][k]);
