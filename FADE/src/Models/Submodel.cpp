@@ -92,16 +92,18 @@ namespace FADE
 		// 	return Settings.Train.LogZero;
 		// }
 		double score = 0;
+		sint tot = 0;
 		for (auto &cluster : dataset)
 		{
 			sint N = cluster.Values.size();
+			tot += N;
 			SetPosition(cluster.Position);
 			for (sint n = 0; n < N; ++n)
 			{
 				score += cluster.LogWeights[n] + LogGaussian(cluster.Values[n]);
 			}
 		}
-		return score; // + prior;
+		return score / tot; // + prior;
 	}
 	std::vector<double> Submodel::QueryExperts(std::vector<double> pos)
 	{
@@ -258,7 +260,7 @@ namespace FADE
 			Vrs[p] = 0;
 			for (sint i = 0; i < Ne; ++i)
 			{
-				Pis[p] += ExpertWeights[i] * Parameters.ExpertMu(i, p);
+				Pis[p] += ExpertWeights[i] * Parameters.ExpertPi(i, p);
 				Mus[p] += ExpertWeights[i] * Parameters.ExpertMu(i, p);
 				Vrs[p] += ExpertWeights[i] * Parameters.ExpertV(i, p);
 			}

@@ -6,9 +6,6 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 * TODO: BLP integration 
 * TODO: Bin discretise for way faster training? 
-* TODO: Model shift to parameter interpolation
-* TODO: Rewrite in pure double mode: abandon the nice notion of the duals for now
-* TODO: Train-reloader
 
 
 ### Longer Term Tasks 
@@ -21,6 +18,9 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 ## Completed Taks
 
 
+* ~Model shift to parameter interpolation~
+* ~Rewrite in pure double mode: abandon the nice notion of the duals for now~
+* ~Train-reloader~
 * ~Dumb Laplacian~
 * ~Object-based save moded inc. the Laplacian~
 * ~Eigen based Cholesky decomposition~  

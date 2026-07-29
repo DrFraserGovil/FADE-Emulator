@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include <FADE/ModelSettings.h>
 #include <FADE/Parameters/ParameterVector.h>
+#include <FADE/Train/TrainingCache.h>
 #include <FADE/Train/TrainingData.h>
 #include <JSL/IO/Vault.h>
 #include <functional>
@@ -48,20 +49,30 @@ namespace FADE
 		std::vector<double> Pis;
 		std::vector<double> Vrs;
 
-		void EMFit();
+		void EMFit(TrainingData &data);
 
 		double ComputeDistance(std::function<double(sint)> a, std::function<double(sint)> b, size_t dep);
 		std::vector<double> ExpertWeights;
 		const sint Nd;
 		const sint Ne;
+		std::vector<TrainCache> Cache;
 		void SetSizes();
 
-		void ComputeDecomp(Eigen::MatrixXd &Hessian);
+		// void ComputeDecomp(Eigen::MatrixXd &Hessian);
 		void CacheQueryDep(const std::vector<double> &pos);
 		void CacheQueryWik(const std::vector<double> &pos);
 		void CacheExpertDep();
 		void CacheExpertWeights();
 		void CacheParameters();
+
+		void CreateTrainingCache(TrainingData &data);
+		void EPhase(TrainingData &data);
+		void MPhase_Mu(TrainingData &data);
+		void MPhase_Weights(TrainingData &data);
+		void MPhase_Vars(TrainingData &data);
+		Eigen::VectorXd bVec;
+		Eigen::MatrixXd muMatrix;
+		std::vector<double> Cvec;
 	};
 
 } // namespace FADE
