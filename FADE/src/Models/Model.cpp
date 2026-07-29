@@ -71,7 +71,48 @@ namespace FADE
 		ConstructModels();
 		forAllModels([&vault](auto &model) { model.Load(vault); model.SyncParameters(); });
 	}
+
 	ModelSettings Model::GetSettings() { return Settings; }
+
+	void Model::Predict(std::set<QueryPoint> &queries)
+	{
+		LOG(INFO) << "Beginning inference loop";
+		auto tmp = JSL::Log::Indent();
+
+		std::vector<double> out;
+		for (auto &query : queries)
+		{
+			sint N = query.PredictionGrid.size();
+			out.resize(N);
+			// query.PredictionValues.resize(N);
+			LOG(INFO) << "Inferring at position" << query.EmulationPoint;
+			// forAllModels([&](auto &model) {
+			for (auto &[id, model] : Models)
+			{
+				model.SetPosition(query.EmulationPoint);
+				std::ostringstream os;
+
+				for (sint ne = 0; ne < id.second; ++ne)
+				{
+					os << "Expert " << ne << "\n";
+					for (sint p = 0; p < Settings.Hyper.ModeCount; ++p)
+					{
+						os << "\t(pi,mu,sigma) = " << model.Parameters.ExpertPi(ne, p) << " / " << model.Parameters.ExpertMu(ne, p) << " / " << model.Parameters.ExpertV(ne, p) << "\n";
+					}
+					os << "\n";
+				}
+				LOG(INFO) << os.str();
+
+				for (sint j = 0; j < N; ++j)
+				{
+					out[j] = exp(model.LogGaussian(query.PredictionGrid[j]));
+				}
+
+				//! HACK: This is just whilst we're on single-only models
+				query.SubmodelValues[id] = out;
+			};
+		}
+	}
 
 	void Model::ConstructModels()
 	{

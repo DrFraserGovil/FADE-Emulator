@@ -34,8 +34,7 @@ namespace FADE
 		double Score(TrainingData &data, bool validationNotTraining = false);
 
 		// double CutPrior();
-		//
-		// double Prior(bool hardPrior = true);
+		// double Prior();
 		std::vector<double> QueryExperts(std::vector<double> pos);
 
 	  private:
@@ -49,7 +48,7 @@ namespace FADE
 		std::vector<double> Pis;
 		std::vector<double> Vrs;
 
-		void EMFit(TrainingData &data);
+		void EMFit(TrainingData &data, sint steps, double earlyStopThreshold);
 
 		double ComputeDistance(std::function<double(sint)> a, std::function<double(sint)> b, size_t dep);
 		std::vector<double> ExpertWeights;

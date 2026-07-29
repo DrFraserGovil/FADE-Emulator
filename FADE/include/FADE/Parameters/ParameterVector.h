@@ -77,9 +77,13 @@ namespace FADE
 
 		void Randomise(PriorSettings &prior);
 
-	  private:
+		HyperSettings &Hyper;
+
+		void Copy(const ParameterVector &origin);
+
 		std::vector<double> Params;
 
+	  private:
 		sint MatrixSize;  // InputDimension *(InputDimension + 1)/2
 		sint ExpertStart; // PhiStart + MatrixSize * Nd
 		sint TotalSize;
@@ -88,7 +92,6 @@ namespace FADE
 		sint ScaleStart = 0;
 		sint PhiStart;	// Hyper.InputDimension * Nd
 		sint DistStart; // ExpertStart + Ne * Hyper.InputDimension
-		HyperSettings &Hyper;
 		sint Ne;
 		sint Nd;
 		void DeriveDimensions();

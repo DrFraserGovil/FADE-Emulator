@@ -103,8 +103,31 @@ namespace FADE
 				score += cluster.LogWeights[n] + LogGaussian(cluster.Values[n]);
 			}
 		}
-		return score / tot; // + prior;
+		return score / tot;
 	}
+	// double Submodel::CutPrior() { return 0; }
+	//
+	// // double Submodel::Prior()
+	// // {
+	// // 	auto prior = CutPrior();
+	// // 	if (prior == Settings.Train.LogZero) { return prior; }
+	// //
+	// // 	for (sint e = 0; e < Ne; ++e)
+	// // 	{
+	// // 		double minVar = 0.02 * 0.02;
+	// // 		for (sint p = 0; p < Settings.Hyper.ModeCount; ++p)
+	// // 		{
+	// // 			double var = Parameters.ExpertV(e, p);
+	// // 			if (var < minVar)
+	// // 			{
+	// // 				// LOG(INFO) << var;
+	// // 				prior += 1e1 * log(var / minVar);
+	// // 			}
+	// // 		}
+	// // 	}
+	// // 	// LOG(INFO) << prior;
+	// 	return prior;
+	// }
 	std::vector<double> Submodel::QueryExperts(std::vector<double> pos)
 	{
 		SetPosition(pos);

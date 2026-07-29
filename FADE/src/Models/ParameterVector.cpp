@@ -83,6 +83,15 @@ namespace FADE
 		// 	Params[i] = Random.Uniform();
 		// }
 	}
+	void ParameterVector::Copy(const ParameterVector &origin)
+	{
+
+		for (sint i = 0; i < TotalSize; ++i)
+		{
+			Params[i] = origin.Params[i];
+		}
+		UpdateDerived();
+	}
 
 	void ParameterVector::DeriveDimensions()
 	{

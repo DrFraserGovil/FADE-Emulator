@@ -33,7 +33,8 @@ def OneDFunction():
         X = np.array([xTrain,r,sample,r]).T
         np.savetxt(f"single_train_{N}.dat",X, delimiter= " ",fmt='%.7f') 
         pt.scatter(xTrain,sample)
-        pt.show()
+        pt.draw()
+        pt.pause(1)
 
     ### generate queries
     q = 100

@@ -148,36 +148,73 @@ void Predict(std::set<std::filesystem::path> paths)
 				LOG(WARN) << "Adaptive grid sizes are not yet supported; defaulting to a preset grid";
 				haveWarned = true;
 			}
-			p.PredictionGrid = JSL::Vector::range(-2, 7, Settings.Resolution);
-			p.PredictionValues.resize(Settings.Resolution);
+			p.PredictionGrid = JSL::Vector::range(-0.1, 1.5, Settings.Resolution);
 		}
 	}
 
-	// model.Predict(out);
+	model.Predict(out);
 
-	auto stream = JSL::IO::openStream(Settings.QueryOut);
-	for (auto &q : out)
+	auto nd = Settings.Model.Hyper.Departments;
+	auto ne = Settings.Model.Hyper.Experts;
+	for (sint k = nd.first; k <= nd.second; ++k)
 	{
-		stream << "New query: " << q.EmulationPoint[0];
-		for (sint r = 1; r < q.EmulationPoint.size(); ++r)
+		for (sint i = ne.first; i <= ne.second; ++i)
 		{
-			stream << " " << q.EmulationPoint[r];
+			auto file = Settings.QueryOut;
+			auto ext = file.extension();
+			file.replace_extension("");
+			file = file.string() + "_" + std::to_string(k) + "_" + std::to_string(i) + ext.string();
+			auto stream = JSL::IO::openStream(file);
+
+			for (auto &q : out)
+			{
+				stream << "New query: " << q.EmulationPoint[0];
+				for (sint r = 1; r < q.EmulationPoint.size(); ++r)
+				{
+					stream << " " << q.EmulationPoint[r];
+				}
+				stream << "\n";
+				stream << q.PredictionGrid[0];
+				sint N = q.PredictionGrid.size();
+				for (sint r = 1; r < N; ++r)
+				{
+					stream << " " << q.PredictionGrid[r];
+				}
+				auto &pred = q.SubmodelValues[{k, i}];
+				N = pred.size();
+				stream << "\n"
+					   << pred[0];
+				for (sint r = 1; r < N; ++r)
+				{
+					stream << " " << pred[r];
+				}
+				stream << "\n";
+			}
+			stream.close();
 		}
-		stream << "\n";
-		stream << q.PredictionGrid[0];
-		sint N = q.PredictionGrid.size();
-		for (sint r = 1; r < N; ++r)
-		{
-			stream << " " << q.PredictionGrid[r];
-		}
-		N = q.PredictionValues.size();
-		stream << "\n"
-			   << q.PredictionValues[0];
-		for (sint r = 1; r < N; ++r)
-		{
-			stream << " " << q.PredictionValues[r];
-		}
-		stream << "\n";
 	}
-	stream.close();
+	// for (auto &q : out)
+	// {
+	// 	stream << "New query: " << q.EmulationPoint[0];
+	// 	for (sint r = 1; r < q.EmulationPoint.size(); ++r)
+	// 	{
+	// 		stream << " " << q.EmulationPoint[r];
+	// 	}
+	// 	stream << "\n";
+	// 	stream << q.PredictionGrid[0];
+	// 	sint N = q.PredictionGrid.size();
+	// 	for (sint r = 1; r < N; ++r)
+	// 	{
+	// 		stream << " " << q.PredictionGrid[r];
+	// 	}
+	// 	N = q.PredictionValues.size();
+	// 	stream << "\n"
+	// 		   << q.PredictionValues[0];
+	// 	for (sint r = 1; r < N; ++r)
+	// 	{
+	// 		stream << " " << q.PredictionValues[r];
+	// 	}
+	// 	stream << "\n";
+	// }
+	// stream.close();
 }

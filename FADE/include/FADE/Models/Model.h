@@ -1,6 +1,6 @@
 #pragma once
 #include "Submodel.h"
-
+#include <FADE/Infer/InferPoint.h>
 namespace FADE
 {
 	class Model
@@ -18,7 +18,7 @@ namespace FADE
 		void Load(std::filesystem::path vaultPath);
 
 		ModelSettings GetSettings();
-		// void Predict()
+		void Predict(std::set<QueryPoint> &queries);
 		std::map<std::pair<sint, sint>, Submodel> Models;
 
 	  private:
