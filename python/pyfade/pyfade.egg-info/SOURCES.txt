@@ -1,0 +1,6 @@
+fade.py
+pyproject.toml
+pyfade.egg-info/PKG-INFO
+pyfade.egg-info/SOURCES.txt
+pyfade.egg-info/dependency_links.txt
+pyfade.egg-info/top_level.txt

@@ -1,8 +1,8 @@
 #include "../Settings.h"
 #include "../modes.h"
 #include <FADE/ModelSettings.h>
-#include <FADE/Models/FADE.h>
-#include <FADE/Train/Train.h>
+#include <FADE/Models/Model.h>
+#include <FADE/Train/TrainingData.h>
 #include <JSL.h>
 #include <vector>
 using namespace FADE;
@@ -58,7 +58,7 @@ void TrainModel(std::set<std::filesystem::path> paths)
 	auto data = ExtractData(paths, Settings.Model);
 
 	LOG(INFO) << "Creating model instance";
-	FADE::Model<double> Model(Settings.Model);
+	FADE::Model Model(Settings.Model);
 
 	Model.Train(data, Settings.ParallelThreads);
 }

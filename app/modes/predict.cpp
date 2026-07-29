@@ -2,11 +2,10 @@
 #include "../modes.h"
 #include "FADE/Infer/InferPoint.h"
 #include <FADE/ModelSettings.h>
-#include <FADE/Models/FADE.h>
+#include <FADE/Models/Model.h>
 #include <FADE/Train/Train.h>
 #include <JSL.h>
 #include <optional>
-#include <vector>
 
 bool isVault(std::string path)
 {
@@ -135,7 +134,7 @@ void Predict(std::set<std::filesystem::path> paths)
 	auto mfile = findModel(Settings.Model.Infer.ModelFile, paths);
 
 	LOG(INFO) << "Spooling up model from " << mfile.string();
-	FADE::Model<double> model(Settings.Model);
+	FADE::Model model(Settings.Model);
 	Settings.Model = model.GetSettings();
 	std::set<QueryPoint> out = GetQueries();
 
@@ -154,7 +153,7 @@ void Predict(std::set<std::filesystem::path> paths)
 		}
 	}
 
-	model.Predict(out);
+	// model.Predict(out);
 
 	auto stream = JSL::IO::openStream(Settings.QueryOut);
 	for (auto &q : out)

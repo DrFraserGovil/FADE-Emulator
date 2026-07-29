@@ -1,3 +1,3 @@
 #pragma once
 
-#include <FADE/Train/TrainingPoint.h> //IWYU pragma:export
+#include <FADE/Train/TrainingData.h> //IWYU pragma:export
