@@ -12,4 +12,5 @@ void FieldList(Wrapper &&W)
 	W(JSL::Interface::Field<double>(priorVarAlpha, "priorVarAlpha", {"prior-var-alpha"}, 1, "The strength of the prior which pushes variances away from zero in the absence of data"));
 	W(JSL::Interface::Field<double>(priorVarValue, "priorVarValue", {"prior-var-value"}, 1, "The variance that the prior pulls towards"));
 	W(JSL::Interface::Field<double>(PriorStrength, "PriorStrength", {"prior-strength"}, 1e-7, "The overall strength of the prior"));
+	W(JSL::Interface::Field<double>(blpScale, "blpScale", {"blp-length"}, 0.1, "The length scale of the BLP fitting"));
 }

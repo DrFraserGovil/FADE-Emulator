@@ -45,6 +45,10 @@ namespace FADE
 		//! @brief The overall strength of the prior
 		//! @alias prior-strength
 		double PriorStrength = 1e-7;
+
+		//! @brief The length scale of the BLP fitting
+		//! @alias blp-length
+		double blpScale = 0.1;
 #include "PriorSettings.PriorSettings.autogen"
 	};
 } // namespace FADE
