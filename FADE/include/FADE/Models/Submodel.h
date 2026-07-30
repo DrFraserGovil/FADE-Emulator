@@ -33,8 +33,8 @@ namespace FADE
 
 		double Score(TrainingData &data, bool validationNotTraining = false);
 
-		// double CutPrior();
-		// double Prior();
+		double CutPrior();
+		double Prior();
 		std::vector<double> QueryExperts(std::vector<double> pos);
 
 	  private:

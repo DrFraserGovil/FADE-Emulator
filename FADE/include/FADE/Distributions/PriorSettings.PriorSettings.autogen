@@ -9,9 +9,8 @@ void FieldList(Wrapper &&W)
 	Name = "PriorSettings";
 	W(JSL::Interface::Field<std::vector<double>>(PriorBottomLeft, "PriorBottomLeft", {"prior-bl"}, {}, "Specifies the BL-boundary of the uniform rectangle in hyper-dimensional space\nIf not specified, the boundary will be inferred from the training data"));
 	W(JSL::Interface::Field<std::vector<double>>(PriorTopRight, "PriorTopRight", {"prior-tr"}, {}, "Specifies the TR-boundary of the uniform rectangle in hyper-dimensional space\nIf not specified, the boundary will be inferred from the training data"));
-	W(JSL::Interface::Field<double>(phiSigma, "phiSigma", {"prior-phi"}, 0.1, "The strength of the prior which asserts that the model should be euclidean"));
-	W(JSL::Interface::Field<double>(ExpertMu, "ExpertMu", {"prior-mu"}, 2, "The assumed means position of the distributions"));
-	W(JSL::Interface::Field<double>(ExpertSigma, "ExpertSigma", {"prior-sigma"}, 1, "The assumed deviation of the distributions"));
-	W(JSL::Interface::Field<double>(ExpertPropertiesSigma, "ExpertPropertiesSigma", {"prior-dist-sigma"}, 10000, "The strength of the prior asserting th assumed distribution properties"));
-	W(JSL::Interface::Field<double>(PriorStrength, "PriorStrength", {"prior-strength"}, 100, "The overall strength of the prior"));
+	W(JSL::Interface::Field<double>(priorVarAlpha, "priorVarAlpha", {"prior-var-alpha"}, 1, "The strength of the prior which pushes variances away from zero in the absence of data"));
+	W(JSL::Interface::Field<double>(priorVarValue, "priorVarValue", {"prior-var-value"}, 1, "The variance that the prior pulls towards"));
+	W(JSL::Interface::Field<double>(PriorStrength, "PriorStrength", {"prior-strength"}, 1e-7, "The overall strength of the prior"));
+	W(JSL::Interface::Field<double>(blpScale, "blpScale", {"blp-length"}, 0.1, "The length scale of the BLP fitting"));
 }

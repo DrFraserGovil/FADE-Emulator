@@ -1,5 +1,6 @@
 #pragma once
 #include "Submodel.h"
+#include <Eigen/Dense>
 #include <FADE/Infer/InferPoint.h>
 namespace FADE
 {
@@ -24,6 +25,10 @@ namespace FADE
 	  private:
 		ModelSettings Settings;
 
+		void BLPFit(TrainingData &data);
+		Eigen::VectorXd KinvY;
+		std::vector<Eigen::VectorXd> BLPPos;
+
 		template <class U>
 		void forAllModels(U callback)
 		{
@@ -35,6 +40,8 @@ namespace FADE
 
 		void ConstructModels();
 
-		void Save();
+		void Save(TrainingData &data);
+		void BLPSave(TrainingData &data, JSL::IO::VaultWriter &vault);
+		void BLPLoad(JSL::IO::VaultReader &vault);
 	};
 } // namespace FADE
