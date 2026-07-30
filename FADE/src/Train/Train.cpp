@@ -428,14 +428,16 @@ namespace FADE
 				{
 					double grad = 0;
 					double curve = 0;
-
+					sint Nt = 0;
 					for (sint t = 0; t < Cache.size(); ++t)
 					{
+						sint Na = data.Training[t].Values.size();
+						Nt += Na;
 						auto &Ct = Cache[t];
 						auto &vp = Ct.Vrs[p];
 						double invV = 1.0 / vp;
 						double invVSq = invV * invV;
-						for (sint a = 0; a < data.Training[t].Values.size(); ++a)
+						for (sint a = 0; a < Na; ++a)
 						{
 							double d = data.Training[t].Values[a] - Ct.Mus[p];
 							double pref = Ct.Contribution[p][a] * Ct.Wi[i];
@@ -447,6 +449,14 @@ namespace FADE
 							curve += pref * b2 * Ct.Wi[i];
 						}
 					}
+					double vip = Parameters.ExpertV(i, p);
+					double vinv = 1.0 / vip;
+					double priorGrad = (Settings.Prior.priorVarAlpha + 1) * vinv * (-1.0 + Settings.Prior.priorVarValue * vinv);
+					double priorCurve = (Settings.Prior.priorVarAlpha + 1) * vinv * vinv * (1.0 - 2 * Settings.Prior.priorVarValue * vinv);
+
+					// LOG(INFO) << grad << " " << curve << " " << priorGrad << " " << priorCurve << " / vip = " << vip;
+					grad = grad / Nt + Settings.Prior.PriorStrength * priorGrad;
+					curve = curve / Nt + Settings.Prior.PriorStrength * priorCurve;
 
 					Parameters.ExpertV(i, p) = std::min(1e3, std::max(1e-6, Parameters.ExpertV(i, p) - grad / curve));
 
