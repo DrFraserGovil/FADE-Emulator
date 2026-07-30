@@ -4,7 +4,6 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* TODO: BLP integration 
 * TODO: Bin discretise for way faster training? 
 
 
@@ -15,9 +14,10 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 * TODO: Full posterior predictive distribution
 
 
-## Completed Taks
+## Completed Tasks
 
 
+* ~BLP integration~
 * ~Model shift to parameter interpolation~
 * ~Rewrite in pure double mode: abandon the nice notion of the duals for now~
 * ~Train-reloader~
