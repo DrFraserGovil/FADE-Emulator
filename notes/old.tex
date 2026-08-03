@@ -1,0 +1,33 @@
+%  \documentclass[fleqn,usenatbib]{mnras}
+\documentclass{article}
+
+\usepackage{newclude}
+\input{macros}
+\def\name{FADE}
+% \title[The FADE Emulator]{Distributional Emulation with \scshape{FADE}}
+\title{Distributional Emulation with \scshape{FADE}}
+\author{JFG}
+
+
+
+\newcommand\addsection[1]
+{
+	\include*{old_sections/#1}
+}
+
+\begin{document}
+	\maketitle
+	\addsection{motivation}
+
+	\addsection{data}
+	\addsection{model}
+
+
+
+	\addsection{priors}
+	\addsection{posterior_predictive}
+
+	% \addsection{splats}
+	\addsection{duals}
+
+\end{document}
