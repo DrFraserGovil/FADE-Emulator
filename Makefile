@@ -4,15 +4,19 @@ BUILD_DIR = .build
 .PHONY: all ship purge clean mirror
 
 MIRROR_FLAGS ?= -vf
-MAKEFLAGS += --no-print-directory
  
+ifeq ($(OS),Windows_NT)
+  EXTRA_BUILD_FLAGS :=
+else
+  EXTRA_BUILD_FLAGS := -- --no-print-directory
+endif
 all:
 	@$(MAKE) mirror MIRROR_FLAGS=-fq
 	@if [ ! -d "$(BUILD_DIR)" ]; then \
 		mkdir -p $(BUILD_DIR); \
 		cmake -S . -B $(BUILD_DIR) -DFORCE_JSL_CLONE=OFF; \
 	fi
-	@cmake --build $(BUILD_DIR) --target fade -- --no-print-directory
+	@cmake --build $(BUILD_DIR) --target fade $(EXTRA_BUILD_FLAGS) 
 
 mirror:
 	@command -v lsj>/dev/null 2>&1 && lsj FADE/include/FADE/ModelSettings.h FADE/include/FADE/*/*Settings.h app/Settings.h $(MIRROR_FLAGS) || echo "No mirror found, using cached values" 
@@ -31,4 +35,4 @@ purge:
 clean:
 	@echo "Rebuilding from scratch"
 	@make purge
-	@make all --no-print-directory
+	@make all 
