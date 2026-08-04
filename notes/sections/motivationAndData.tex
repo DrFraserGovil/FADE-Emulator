@@ -11,7 +11,7 @@
 	Whilst there are many methods which allow us to \textit{quantify the uncertainty} of a prediction, there are few which allow us to fully reconstruct an accurate \textit{distribution}, if the underlying `truth' that is being distributed is genuinely a stochastic process, rather than a `deterministic process with unknown noise'.
 
 
-\subsection{The Data \& The Mechanistic Model}
+\subsection{The Data}
 
 	We supposes that there exists some observable $\y \in \R^q$ which may be extracted from a function $\hat{M}$ evaluated at a parameter vector $\vec{P} \in \vec{\Pi}$:
 	\begin{equation}
@@ -53,9 +53,11 @@
 
 \subsection{Generating Data}
 
-	The `obvious' solution for generating the data we need for our emulator would be to sample $\vec{x}$ uniformly from $\mathcal{E}$, and $\vec{z}$ from the latent prior, $P(\vec{z})$, and then compute $\vec{y} = \hat{M}(\x, \vec{z})$. Our dataset would then be $\D =  \{(\vec{x}_i, \y_i)\}_{i=1}^{D}$.
 
 	\subsubsection{Latent Variables \& Priors}
+
+		The `obvious' solution for generating the data we need for our emulator would be to sample $\vec{x}$ uniformly from $\mathcal{E}$, and $\vec{z}$ from the latent prior, $P(\vec{z})$, and then compute $\vec{y} = \hat{M}(\x, \vec{z})$. Our dataset would then be $\D =  \{(\vec{x}_i, \y _i)\}_{i=1}^{D}$.
+
 		However, this would have the major drawback that if -- at a later date -- our priors on the latent variables were updated, then we would need to completely regenerate the training data. This would be a significant bottleneck in computation time: for the models of interest to us, the vast majority of the computational expense will be in creating $\D$.
 
 		Instead, we suppose that we maintain two datasets, where the latent priors are drawn from $P_\text{sample}(\vec{z},\vec{x})$, which is not necessarily the same as our current prior on $\vec{z}$.
@@ -85,13 +87,13 @@
 		The choice of sampling distribution must therefore be informed on a best-guess understanding of how the latent prior may evolve to ensure that $D^*$ is a reasonable size for both the current latent prior, and any future updates. If $D^* \ll D$, then it will be necessary to generate more data, which is to be avoided under the current paradigm.
 	\subsubsection{x-Clustering}
 
-		We also note that clustering the data at values of identical $\vec{x}$ provides both a vast computational speed up, and negates a danger posed by the mean-fitting discussed in \S\ref{S:BLP}. That is, instead of generating $D$ unique values of $\vec{x}$ (and then $\vec{z}$ and hence $\y$), we suppose that only $N_t$ values of $\x$ are unique.
+		We also note that clustering the data at values of identical $\vec{x}$ provides both a vast computational speed up, and negates a danger posed by the mean-fitting discussed in \S\ref{S:BLP}. That is, instead of generating $D$ unique values of $\vec{x}$ (and then $\vec{z}$ and hence $\y$), we suppose that only $T$ values of $\x$ are unique.
 
-		At each unique $\x_t$, we then generate $N_a^t$ pairs of ($\vec{z}$, $\vec{y}$) pairs\footnote{Indeed, if the model is stochastic, it may be that we keep $\vec{z}$ constant and sample several $\y$ from a single $(\x_t, \vec{z}_a)$ pair - the optimal distribution here is to be determined by the trainer.}, to form a clustered dataset
+		At each unique $\x_t$, we then generate $A_t$ pairs of ($\vec{z}$, $\vec{y}$) pairs\footnote{Indeed, if the model is stochastic, it may be that we keep $\vec{z}$ constant and sample several $\y$ from a single $(\x_t, \vec{z}_a)$ pair - the optimal distribution here is to be determined by the trainer.}, to form a clustered dataset
 
 		\begin{equation}
-			\mathcal{D} = (\left\{ \x_t, \{\y_t^a, \eta_t^a\}_{a=1}^{N_a^t} \right\}_{t = 1}^{N_t}
+			\mathcal{D} = (\left\{ \x_t, \{\y_t^a, \eta_t^a\}_{a=1}^{A_t} \right\}_{t = 1}^{T}
 		\end{equation}
 
-		This provides a speed up since the bulk of the computation time during training is spent computing $W_i(\x)$ - if this value can be reused $N_a$ times, it provides a commensurate $N_a\times$-speedup.
+		This provides a speed up since the bulk of the computation time during training is spent computing $W_i(\x)$ - if this value can be reused $\approx A_t$ times, it provides a commensurate $\approx A_t\times$-speedup.
 
