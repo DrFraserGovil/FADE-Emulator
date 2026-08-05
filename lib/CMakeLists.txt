@@ -13,9 +13,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB_RECURSE ALL_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 add_library(FADE STATIC ${ALL_SOURCES})
 if(MSVC)
-    target_compile_options(fade PRIVATE /W4)
+    target_compile_options(FADE PRIVATE /W4)
 else()
-    target_compile_options(fade PRIVATE -Wall -Wextra)
+    target_compile_options(FADE PRIVATE -Wall -Wextra)
 endif()
  
 # Link libraries
