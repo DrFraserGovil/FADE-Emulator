@@ -32,7 +32,7 @@ std::filesystem::path findModel(std::optional<std::filesystem::path> modelfile, 
 	{
 
 		out = modelfile.value();
-		if (!isVault(out))
+		if (!isVault(out.string()))
 		{
 			LOG(ERROR) << out << " passed as --model flag, but is not a valid model file";
 			exit(1);
@@ -43,7 +43,7 @@ std::filesystem::path findModel(std::optional<std::filesystem::path> modelfile, 
 		LOG(INFO) << "No " << JSL::Display::Italics() << "model" << JSL::Display::Italics(false) << " key passed to settings\n\tSearching through the input files for a valid model";
 		for (auto file : files)
 		{
-			if (isVault(file))
+			if (isVault(file.string()))
 			{
 				if (!out.empty())
 				{
