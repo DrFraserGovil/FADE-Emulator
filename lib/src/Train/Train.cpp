@@ -1,6 +1,7 @@
 #include <FADE/Models/Submodel.h>
 #include <FADE/Utility/ale.h>
 #include <FADE/Utility/random.h>
+#include <numbers>
 namespace FADE
 {
 	void StochasticWalk(double &newV, double &oldV, double step, double prob)
@@ -263,7 +264,7 @@ namespace FADE
 	void Submodel::EPhase(TrainingData &data)
 	{
 		const auto P = Settings.Hyper.ModeCount;
-		double log2pi = log(2 * M_PI);
+		double log2pi = log(2 * std::numbers::pi);
 		for (sint t = 0; t < data.Training.size(); ++t)
 		{
 			SetPosition(data.Training[t].Position);
