@@ -4,7 +4,11 @@ list(FILTER APP_SOURCES EXCLUDE REGEX "${CMAKE_CURRENT_BINARY_DIR}/.*")
 
 add_executable(fade ${APP_SOURCES})
 
-target_compile_options(fade PRIVATE -Wall -Wextra)
+if(MSVC)
+    target_compile_options(fade PRIVATE /W4)
+else()
+    target_compile_options(fade PRIVATE -Wall -Wextra)
+endif()
 
 target_link_libraries(fade PRIVATE FADE)
 

@@ -12,7 +12,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # #find all source files
 file(GLOB_RECURSE ALL_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 add_library(FADE STATIC ${ALL_SOURCES})
-target_compile_options(FADE PRIVATE -Wall -Wextra)
+if(MSVC)
+    target_compile_options(fade PRIVATE /W4)
+else()
+    target_compile_options(fade PRIVATE -Wall -Wextra)
+endif()
  
 # Link libraries
 include(FetchContent)
