@@ -4,11 +4,14 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* TODO: Bin discretise for way faster training? 
-
+* Set up CHANGELOG for full release schedule now that we have active users
+* Write up documentation for posterior predictive 
+* Write u pdocumentation for priors on the expert parameters
+* Documentation on the optimisation of the position/scale values
 
 ### Longer Term Tasks 
 
+* TODO: Bin discretise for way faster training? 
 * TODO: Bones of the more intelligent optimiser
 * TODO: Documentation setup
 * TODO: Full posterior predictive distribution
