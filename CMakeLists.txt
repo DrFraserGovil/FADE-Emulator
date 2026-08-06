@@ -10,5 +10,5 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
 endif()
 
-add_subdirectory(FADE)
+add_subdirectory(lib)
 add_subdirectory(app)
