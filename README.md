@@ -141,7 +141,7 @@ w_0 w_1 w_2 (...) w_n u_1 u_2 u_3 (...) u_m
 (...)
 ```
 
-As with the training data, the `\_0 ...x\_n`specify the values of $\mathbf{x}$, a point in emulation space to be queried. The values of $y_1...y_m$ form an array of samples of the density that the model will be evaluated on: so specifying `\_0 y\_1 y\_2 ..`means `t position $\mathbf{x}$, tell me the probability density at $y_0$, then $y_1$, then $y_2$.'' There is no requirement that $\{y_i\}$ be sorted or uniform.
+As with the training data, the `x_0 ...x_n`specify the values of $\mathbf{x}$, a point in emulation space to be queried. The values of $y_1...y_m$ form an array of samples of the density that the model will be evaluated on: so specifying `x_0 y_1 y_2 ..`means `t position $\mathbf{x}$, tell me the probability density at $y_0$, then $y_1$, then $y_2$.'' There is no requirement that $\{y_i\}$ be sorted or uniform.
 
 Multiple $\mathbf{x}$-queries can be entered, with each new $\mathbf{x}-y$ prediction entered on a new line.
 
@@ -151,7 +151,7 @@ The prediction is then made by calling:
 ./fade predict --query qfile.dat --model my_model.fde
 ```
 
-The output of a prediction is a second data file (with name configured by `query-out`). If the model which was queried was trained on multiple $N_e, N_d$, then a separate query file (denoted by `[name]\_Nd\_Ne.dat`) is written for each pair.
+The output of a prediction is a second data file (with name configured by `query-out`). If the model which was queried was trained on multiple $N_e, N_d$, then a separate query file (denoted by `[name]_Nd_Ne.dat`) is written for each pair.
 
 For each $\mathbf{x}-y$ specification in the query file, the output file takes the form:
 
