@@ -1,0 +1,46 @@
+%!TEX root=../fade.tex
+
+\subsection{Posterior Predictive Distribution}
+	\def\vD{\vec{\Delta}}
+	Although tempting, it does not quite suffice to find the set of parameters $(\vT, \vD)$ which maximise the likelihood of observing our data (the maximum \textit{a posterior distribution}, MAP), as this would produce a distribution which is conditioned on those values, and may over-state our certainty on the statistical distributions we have inferred. Instead, we require the \textit{posterior predictive distribution}, defined as:
+	\begin{equation}
+		p^\text{ppd-fade}(y | \vec{x}, \vec{\eta}) = \sum_{\vec{\Delta}} \int p^\text{fade}(y | \vec{x}, \vec{\Delta}, \vT) \times L(\vT, \vec{\Delta} | \mathcal{D})~ \mathrm d \vT
+	\end{equation}
+	Where $L(\vT | \vec{x})$ is the posterior distribution of the observed data $\mathcal{D}$ under a set of FADE parameters $(\vec{\Delta}, \vT)$:
+	\begin{equation}
+		L(\vec{\Delta},\vT) = \left(\prod_{t \in T} \prod_{a \in A_t} \left[p^\text{fade}(y_t^a | \vec{x}_t, \vT, \vec{\Delta})\right]^{\zeta_t^a}\right) \times \text{Prior}(\vec{\Delta}, \vT)
+	\end{equation}
+	Where we recall that we have partitioned our data such that $\mathcal{D} = \{\x_t, \{y_t^a, \zeta_t^a\}_{a \in A_t} \}_{t \in T}$ and $\zeta_t^a$ is the prior-weighting assigned to the observation $y_t^a$ \eqref{E:DefineWeights}.
+
+	Naturally, the dimensionality of this integral-and-summation renders its exact computation infeasable, especially as the entire purpose of an Emulator is precisely that it be quicker to compute that the original model from which the data was drawn. Luckily, if the data is of sufficient density and the model is identifiable, then $L$ (and correspondingly, $\mathcal{L} = \log L$) becomes very tightly peaked around the MAP value, and decays very quickly to zero away from this position (this is the Laplacian Approximation):
+
+	\begin{equation}
+		L(\vT, \Delta) \approx L_0 \mathcal{N}\exp\left(-\frac{1}{2} (\vT - \vT_0) \vec{\Sigma} (\vT - \vT_0)\right)
+	\end{equation}
+
+	Where:
+	\begin{align}
+		\vT_0(\vD)          & = \text{argmax}_\vT \left( \mathcal{L}(\vT, \vD) \right)
+		\\
+		[\vec{\Sigma}]_{ij} & = - \left.\pdiv{^2\mathcal{L}}{[\vT]_i \partial [\vT]_j}\right|_{\vT = \vT_0}
+		\\
+		L_0(\vD)            & = L(\vD, \vT_0)
+		\\
+		\mathcal{N}         & = \sqrt{\frac{\text{det}(\vec{\Sigma})}{(2\pi)^{\text{dim}(\vT)} }}
+	\end{align}
+	Under the assumptions of the Laplacian Approximation, we may then approximate the integral as:
+	\begin{spalign}
+		\mathcal{I}(y | \vec{x}, \vD) & = \int p^\text{fade}(y | \vec{x}, \vec{\Delta}, \vT) \times L(\vT, \vec{\Delta} | \mathcal{D})~ \mathrm d \vT
+		\\
+		& \approx \frac{L_0}{S} \sum_{s =0}^S p^\text{fade}(y | \x, \vD, \vec{\theta}_s)
+	\end{spalign}
+	Where $\vec{\theta}_s \sim \mathcal{N}(\vT_0, \Sigma)$ are $S$ independent samples drawn from the Laplacian-approximated data-posterior.
+
+	We may similarly reduce the sum over $\vD$ -- though somewhat less rigorously -- by noting that there exist $L_0(\Delta_i) \gg \L_0(\Delta_j)$, and that we only need to retain those which have a non-trivial contribution. Again, these non-trivial contributions, $\Lambda = \{ \vD_i \text{ s . t. } L_0 \gg 0 \}$, can be located at train-time, and thus at inference time, it suffices to compute:
+
+	\begin{equation}
+		p^\text{ppd}(y | \x , \vec{\eta}) = \mathcal{N}^\prime\sum_{\vD \in \Lambda} \frac{L_0}{S}\sum_{s = 0}^S  p^\text{fade}(y | \vec{x}, \vec{\Delta}, \vec{\theta}_s)
+	\end{equation}
+	Here $\mathcal{N}^\prime$ is a normalisation constant, equivalent to $p(\mathcal{D})^{-1}$ (since $L$ was an un-normlaised likelihood). Since each submodel is trained on the same dataset, however, this term is constant and can therefore be accounted for by simply normalising the output distribution over its domain.
+
+	Since this amounts to a sum of FADE submodels evaluated over a (trivial)  multivariate Gaussian draw, it will be very quick to evaluate, thereby achieving the goal of an emulator.

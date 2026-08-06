@@ -11,6 +11,7 @@ This is the pre-release version of the code which is being tested by our student
 
 ### Added
 
+* A revised theory document, with a User Manual for the code
 * A new probability model, based on parameter interpolation, rather than distributional interpolaiton
 * A new GEM fitting model for the per-Expert parameters, and the mathematical theory to derive it 
 * A new testing interface for validation 

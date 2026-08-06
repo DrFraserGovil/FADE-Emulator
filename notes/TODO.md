@@ -4,9 +4,7 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 
 ### Today's Tasks
 
-* Set up CHANGELOG for full release schedule now that we have active users
-* Write up documentation for posterior predictive 
-* Write u pdocumentation for priors on the expert parameters
+* Write up documentation for priors on the expert parameters
 * Documentation on the optimisation of the position/scale values
 
 ### Longer Term Tasks 
@@ -20,6 +18,9 @@ As this is code under active, heavy development, we're keeping the to-do list fa
 ## Completed Tasks
 
 
+* ~Update the READEME with the instructions from the doc~
+* ~Write up documentation for posterior predictive~
+* ~Set up CHANGELOG for full release schedule now that we have active users~
 * ~BLP integration~
 * ~Model shift to parameter interpolation~
 * ~Rewrite in pure double mode: abandon the nice notion of the duals for now~
