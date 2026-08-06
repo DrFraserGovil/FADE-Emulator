@@ -2,6 +2,7 @@
 #include "Submodel.h"
 #include <Eigen/Dense>
 #include <FADE/Infer/InferPoint.h>
+#include <filesystem>
 namespace FADE
 {
 	class Model
@@ -16,7 +17,7 @@ namespace FADE
 
 		void SetPosition(std::vector<double> pos);
 
-		void Load(std::filesystem::path vaultPath);
+		void Load(const std::filesystem::path &vaultPath);
 
 		ModelSettings GetSettings();
 		void Predict(std::set<QueryPoint> &queries);

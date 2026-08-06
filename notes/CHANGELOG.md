@@ -5,7 +5,28 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-### [Unreleased]
+## 0.1.0 2026-08-06
+
+This is the pre-release version of the code which is being tested by our students. This does not yet represent the full scope of the FADE Emulator (it is missing the Posterior Predictive and the associated Hessian-estimation) .
+
+### Added
+
+* A revised theory document, with a User Manual for the code
+* A new probability model, based on parameter interpolation, rather than distributional interpolaiton
+* A new GEM fitting model for the per-Expert parameters, and the mathematical theory to derive it 
+* A new testing interface for validation 
+* A set of github hooks for cross-platform validation. FADE is confirmed to compile on Ubuntu, macOS and Windows.
+* Mean trend handled by an internal BLP model 
+ 
+### Changed 
+
+* Updated priors to be less spurious
+* Updated the training model to explicitly support x-clustering
+* Pegged the library to compile against [JSL Version 3.2.0](https://github.com/DrFraserGovil/JSL/releases/tag/v3.2.0)
+* The FADE library now lives inside ``lib`` rather than ``FADE`` -- this is for avoidance with the compiled binaty (``fade``) on case-insensitive OSes
+### Removed
+
+* Parallelisation (will be added later, but removed for simplicity)
 
 ## [0.0.1] 2026-07-13 
 

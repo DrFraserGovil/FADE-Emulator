@@ -1,34 +1,27 @@
-%  \documentclass[fleqn,usenatbib]{mnras}
-\documentclass{article}
-
-\usepackage{newclude}
+\documentclass[10pt]{article}
+\usepackage{lmodern} % Adds bold small-caps support
+\usepackage{hyperref}
+\def\fade{\textmd{\textsc{fade}}}
+\title{Never \fade{} Away: Distributional Emulation}
+\author{Jack Fraser-Govil, Sam Watson, Penny Hancock} 
 \input{macros}
-\def\name{FADE}
-% \title[The FADE Emulator]{Distributional Emulation with \scshape{FADE}}
-\title{Distributional Emulation with \scshape{FADE}}
-\author{JFG}
-
-
-
-\newcommand\addsection[1]
-{
-	\include*{sections/#1}
-}
-
+\usepackage{tocloft} 
+\setcounter{tocdepth}{2}
 \begin{document}
-	\maketitle
-	% \include*{changelog}
-	\addsection{motivation}
+	\maketitle{}
 
-	\addsection{data}
-	\addsection{model}
+	\tableofcontents{}
+	\clearpage
+	\section{Model Statement}
+		\input{sections/motivationAndData.tex}
+		\input{sections/model.tex}
+		\input{sections/posterior.tex}
+		\clearpage
 
+	\section{Mathematical Niceties}
+		\input{sections/maths.tex}
 
-	 
-	\addsection{priors}
-	\addsection{posterior_predictive}
-
-	% \addsection{splats}
-	\addsection{duals}
-
+		\clearpage
+	\section{The \fade{} User Manual}
+		\input{sections/code.tex}
 \end{document}

@@ -58,7 +58,7 @@ namespace FADE
 		forAllModels([&pos](auto &model) { model.SetPosition(pos); });
 	}
 
-	void Model::Load(std::filesystem::path vaultPath)
+	void Model::Load(const std::filesystem::path &vaultPath)
 	{
 		LOG(INFO) << "Loading settings from file " << vaultPath;
 		auto vault = JSL::IO::VaultReader(vaultPath.string());

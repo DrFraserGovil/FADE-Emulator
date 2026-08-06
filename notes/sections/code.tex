@@ -1,0 +1,177 @@
+%!TEX root=../fade.tex
+
+This section gives a rough breakdown of the \fade{} code: how to install, compile and run it.
+
+You will need an internet connection, and some knowledge of how to use a terminal environment (or a well configured \href{https://visualstudio.microsoft.com/}{Visual Studio} installation). The steps here will work on any POSIX compatible system (Linux or MacOS) -- on windows machines you must either \href{https://learn.microsoft.com/en-us/windows/wsl/install}{install WSL}, or have a working \texttt{msvc} compiler installed on your machine.
+
+\subsection{Installing the Code}
+
+	The code is hosted on github at \url{https://github.com/DrFraserGovil/FADE-Emulator/}. It can either be downloaded manually, or cloned in the terminal:
+
+	\begin{terminal}
+>> git clone https://github.com/DrFraserGovil/FADE-Emulator
+	\end{terminal}
+
+	\def\jsl{\textmd{\textsc{jsl}}}
+
+\subsection{Compiling the Code}
+	At the present, we do not distribute precompiled binaries, so it is necessary to compile the code on your own machine. You must first \href{https://cmake.org/download/}{install cmake} and ensure that you have a valid compiler (any C++20 compatible compiler is fine).
+
+	Then:
+	\begin{terminal}
+>> cd FADE-Emulator
+>> make
+	\end{terminal}
+
+	You must have an internet connection when you run this command, as it will download\footnote{Using CMake FetchContent} some other software: the \href{https://libeigen.gitlab.io/}{Eigen linear algebra library}\footnote{If you are familiar with python, this is \texttt{numpy.linalg} on steroids}, and the \href{https://github.com/DrFraserGovil/JSL}{Jack Standard Library} (\jsl{}), a separate project I have authored that handles much of the `application' code.
+
+	It will spit out a bunch of text  - as of 03/08/26, these include a number of warnings (in purple) - but it should complete the compilation.
+
+	\subsubsection{Validating Compilation}
+
+		Running the command
+		\begin{terminal}
+			./fade test
+		\end{terminal}
+
+		Places the code into testing mode. If you have a valid python environment (with \texttt{matplotlib} installed), it will generate a graphic demonstrating the $W_i$ fractions for a randomly instantiated model.
+
+		If you don't have Python - you will get some error messages from your OS, but a \texttt{test} directory will have been creating, holding the associated data.
+\subsection{\fade{} and \jsl{}}
+
+	The internal workings of the \fade{} make heavy use of an existing library I have written, the \jsl{}.
+
+	\subsubsection{Logging}
+		\fade{} uses the \href{https://jack-standard-library.readthedocs.io/en/stable/docfiles/Log.html#log}{custom \jsl{} logger} to write the output that you see when writing it. This allows some of the output to be suppressed when you want the code to be `quiet', or output much more data when you want to know what has gone wrong.
+
+		\begin{enumerate}
+			\item \texttt{./fade \ldots} gives the normal output level
+			\item \texttt{./fade --quiet \ldots} suppresses all output except error messages
+			\item \texttt{./fade --verbose \ldots} produces lots of output which can be used for diagnostics, but it unsuitable for general use
+		\end{enumerate}
+
+	\subsubsection{Configuration}
+
+		The FADE Emulator has a large number of parameters that can be modified. You may view them by typing:
+
+		\begin{terminal}
+			./fade help
+		\end{terminal}
+
+		This activates the help menu, and details which values which can be changed by the user, and a description of what they do. Most settings have a similar name to the names used in this document (though not always).
+
+		These settings are grouped into named groups, but this has no meaning for the user, other than helping to group parameters that do similar things together.
+
+		Changing the value is done in one of two ways:
+
+		\paragraph{Command Line Arguments} Running the \texttt{./fade} executable and adding extra arguments after it:
+
+		\begin{terminal}
+./fade train -expert 3,3 -model my_file.fde -file training_data.dat
+		\end{terminal}
+		This will attempt to launch the training module with:
+		\begin{enumerate}
+			\item Only 3 experts (the range $3 \to 3$, see below for multi-model training syntax)
+			\item Beginning the training at the previous model defined by \texttt{my\_file.fde}
+			\item Using the training data stored in \texttt{training\_data.dat}
+		\end{enumerate}
+		All other values will use their default value.
+
+		Note that some parameters have multiple aliases which can be used: \texttt{-input} and \texttt{file} have the same meaning. This is detailed in the \texttt{help} menu.
+
+		\paragraph{Configuration files} As you tweak more and more values, the number of commands given to run the code will get longer and longer. Instead, you can write your data to a config file:
+
+		\begin{terminal}
+// test.cfg
+expert 3,3
+model my_file.fde
+file training_data.dat
+(...)
+
+>> ./fade --config test.cfg
+		\end{terminal}
+
+		This loads the data in the config file, and reads it as if it were passed as arguments to the command line.
+
+
+		\paragraph{Mixed-Mode} It is possible to use both a config file and command line arguments:
+
+		\begin{terminal}
+		>> ./fade --config test.cfg -model other_model.fde
+		\end{terminal}
+
+		In this case, the config file is loaded \textit{first}, and then the command line values are applied, overwriting any values previously set: in the example above, the value passed to \texttt{model} is `\texttt{other\_model.fde}': the one given at the command line and not `\texttt{my\_file.fde}' (the one in the config file).
+
+
+		\begin{aside}[{To dash or not two dash?}]
+			When specifying command line variables, any number of dashes are allowed: \texttt{--flag} and \texttt{-flag} are always equivalent. The general advice is to use one dash for short commands (\texttt{-f}) and two for long ones (\texttt{--model}), but this is not a requirement.
+
+			When specifying variables in a config-file, do not use leading dashes.
+		\end{aside}
+\subsection{Training Models}
+
+	In order to create a new model, the user must provide \textbf{training data}. The expected data format is as follows:
+
+	\begin{terminal}
+x_0 x_1 x_2 (...) x_n z y
+// repeat for each y on next lines
+	\end{terminal}
+	I.e., a space-delimited enumeration of the position vector $\x_t$, the prior-weighting $\zeta_t^a$ and the observed value $y_t^a$.
+
+	If $\x_t$ is one dimensional ($\x_t = x_t$), the data file would look like:
+
+	\begin{terminal}
+//training.data
+x_1 z_1 y_1
+x_2 z_2 y_2
+x_3 z_3 y_3
+(...)
+\end{terminal}
+
+	If you do not know what $\zeta_t^a$ is (\ref{E:DefineWeights}), then set these values to 1 (but do not omit them entirely).
+
+	\begin{aside}[Deprecation Imminent]
+		This method of inputing data will be deprecated soon, in favour of one which natively supports $\x$-clustering. At the moment, clustering is achieved automatically by grouping values of $\x$ which are closer than the \texttt{ClusteringRadius} - a user-configured variable.
+	\end{aside}
+
+	Once the training data has been generated, the model may be trained:
+
+	\begin{terminal}
+		./fade train --file training.data --save my_model.fde --expert 3,6 --dep 2,4
+	\end{terminal}
+
+	This will generate a model called \texttt{my\_model.fde} which has been trained on the training data. This will simultaneously train the set of submodels for $3 \leq N_e \leq 6$ and $2 \leq N_d \leq 4$ (for a total of 12 individual models).
+\subsection{Using Models}
+
+	Once a model has been trained, it can be used to make predictions of the distribution function $p(y| \x)$. In order to achieve this, the user must write a file with the following syntax:
+
+	\begin{terminal}
+//qfile.dat
+x_0 x_1 x_2 (...) x_n y_1 y_2 y_3 y_4 y_5 (...) y_m
+//repeat for each value of X
+\end{terminal}
+
+	As with the training data, the \texttt{x\_0 ...x\_n} specify the values of $\x$, a point in emulation space to be queried. The values of $y$ form the grid that the model will be evaluated on: so specifying \texttt{y\_0 y\_1 y\_2 ..} means ``at position $\x$, tell me the probability density at $y_0$, then $y_1$, then $y_2$.'' There is no requirement that $\{y_i\}$ be sorted or uniform.
+
+	Multiple $\x$-queries can be entered, with each new $\x-y$ prediction entered on a new line.
+
+	The prediction is then made by calling:
+
+	\begin{terminal}
+./fade predict --query qfile.dat --model my_model.fde
+	\end{terminal}
+
+	The output of a prediction is a second data file (with name configured by \texttt{query-out}). If the model which was queried was trained on multiple $N_e, N_d$, then a separate query file (denoted by \texttt{[name]\_Nd\_Ne.dat}) is written for each pair.
+
+	For each $\vec{x}-y$ specification in the query file, the output file takes the form:
+
+	\begin{terminal}
+New query: x_0 x_1 (...) x_n
+y_1 y_2 y_3 (...) y_m
+p_1 p_2 p_3 (...) p_m
+//repeat for each x-y in query
+\end{terminal}
+	Where:
+	\begin{equation}
+		p_i = p^\text{cns}(y_i | \x)
+	\end{equation}

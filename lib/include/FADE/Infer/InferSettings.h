@@ -9,7 +9,7 @@ namespace FADE
 		//! @brief The model to be used for prediction
 		//! @detail If no value provided, the Files will be searched for a valid model file; otherwise the code will exit with an error.
 		//! @alias model, m
-		std::optional<std::filesystem::path> ModelFile = std::nullopt;
+		std::optional<std::string> ModelFile = std::nullopt;
 
 #include "InferSettings.InferenceSettings.autogen"
 	};

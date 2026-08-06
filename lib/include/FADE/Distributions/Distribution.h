@@ -1,10 +1,12 @@
 #pragma once
-#include <JSL/Log.h>
+#include <algorithm>
+#include <cmath>
+#include <numbers>
 namespace FADE
 {
-	const double log_pi_norm = log(1.0 / sqrt(2 * M_PI));
+	const double log_pi_norm = log(1.0 / sqrt(2 * std::numbers::pi));
 	const double invSqrt2 = 1.0 / sqrt(2);
-	const double logpi = log(M_PI);
+	const double logpi = log(std::numbers::pi);
 	const double log2 = log(2);
 	inline double LogGaussianDistribution(double x, double mu, double var)
 	{
