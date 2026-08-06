@@ -36,7 +36,7 @@ else()
 		FetchContent_Declare(
 		JSL
 		GIT_REPOSITORY https://github.com/DrFraserGovil/JSL.git
-		GIT_TAG        main  
+		GIT_TAG        v3.2.0
 	)
 	FetchContent_MakeAvailable(JSL)
 endif()
