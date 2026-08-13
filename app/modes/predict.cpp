@@ -168,10 +168,19 @@ void Predict(std::set<std::filesystem::path> paths)
 
 			for (auto &q : out)
 			{
+
+				auto sub = model.Models.at({k, i});
+				sub.SetPosition(q.EmulationPoint);
+
 				stream << "New query: " << q.EmulationPoint[0];
 				for (sint r = 1; r < q.EmulationPoint.size(); ++r)
 				{
 					stream << " " << q.EmulationPoint[r];
+				}
+				stream << ". MaP Submodel: ";
+				for (sint p = 0; p < sub.Pis.size(); ++p)
+				{
+					stream << "Mode " << p << " (" << sub.Pis[p] << ", " << sub.Mus[p] << ", " << sqrt(sub.Vrs[p]) << ") ";
 				}
 				stream << "\n";
 				stream << q.PredictionGrid[0];

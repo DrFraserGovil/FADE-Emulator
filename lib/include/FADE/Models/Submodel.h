@@ -37,16 +37,16 @@ namespace FADE
 		double Prior();
 		std::vector<double> QueryExperts(std::vector<double> pos);
 
+		std::vector<double> Mus;
+		std::vector<double> Pis;
+		std::vector<double> Vrs;
+
 	  private:
 		double BestScore;
 		ModelSettings &Settings;
 		std::vector<double> LogQueryDepartmentWeight;
 		std::vector<std::vector<double>> LogExpertDepartmentWeight;
 		std::vector<std::vector<double>> LogPerDepartmentExpertWeights;
-
-		std::vector<double> Mus;
-		std::vector<double> Pis;
-		std::vector<double> Vrs;
 
 		void EMFit(TrainingData &data, sint steps, double earlyStopThreshold);
 
