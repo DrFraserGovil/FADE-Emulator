@@ -32,7 +32,7 @@ class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 	//! @brief The number of parallel threads that can be spawned in addition to the main thread.
 	size_t ParallelThreads = 0;
 
-	//! @alias The location that query data is saved to
+	//! @brief The location that query data is saved to
 	//! @alias query-out
 	std::filesystem::path QueryOut = "QueryOutput.dat";
 
