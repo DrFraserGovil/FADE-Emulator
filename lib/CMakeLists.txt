@@ -27,9 +27,9 @@ file(GLOB_RECURSE ALL_SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 add_library(FADE STATIC ${ALL_SOURCES})
 target_include_directories(FADE PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/generated")
 if(MSVC)
-    target_compile_options(FADE PRIVATE /W4 /O2)
+    target_compile_options(FADE PRIVATE /W4 )
 else()
-    target_compile_options(FADE PRIVATE -Wall -Wextra -O3 -march=native)
+    target_compile_options(FADE PRIVATE -Wall -Wextra)
 endif()
  
 # Link libraries

@@ -49,8 +49,8 @@ Mode Initialise(int argc, char **argv)
 		if (std::string_view(argv[i]) == "--version")
 		{
 			std::cout << "FADE v" << FADE_VERSION << "\n";
+			exit(0);
 		}
-		exit(0);
 	}
 	auto cmds = Settings.Parse(argc, argv);
 
