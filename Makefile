@@ -19,7 +19,7 @@ all:
 	@cmake --build $(BUILD_DIR) --target fade $(EXTRA_BUILD_FLAGS) 
 
 mirror:
-	@command -v lsj>/dev/null 2>&1 && lsj lib/include/FADE/ModelSettings.h lib/include/FADE/*/*Settings.h app/Settings.h $(MIRROR_FLAGS) || echo "No mirror found, using cached values" 
+	@command -v lsj>/dev/null 2>&1 && lsj lib/include/FADE/ModelSettings.h lib/include/FADE/*/*Settings.h app/Settings.h $(mirror_flags) || echo "no mirror found, using cached values" 
 ship:
 	@make mirror
 	@mkdir -p $(BUILD_DIR)

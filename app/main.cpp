@@ -1,5 +1,6 @@
 #include "Settings.h"
 #include "modes.h"
+#include "version.h"
 #include <FADE.h>
 #include <JSL.h>
 // This is the complement to the extern declaration; this defines the global settings object
@@ -42,6 +43,15 @@ void checkMode(std::optional<Mode> &mode, std::string cmd, std::string name, Mod
 
 Mode Initialise(int argc, char **argv)
 {
+	// check for version first
+	for (int i = 1; i < argc; ++i)
+	{
+		if (std::string_view(argv[i]) == "--version")
+		{
+			std::cout << "FADE v" << FADE_VERSION << "\n";
+		}
+		exit(0);
+	}
 	auto cmds = Settings.Parse(argc, argv);
 
 	// Set up the logger

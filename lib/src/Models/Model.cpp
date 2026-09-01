@@ -161,7 +161,7 @@ namespace FADE
 			}
 			Yvec(tx) = Yvec(tx) / Ne;
 			double variance = ysqSum / Ne - Yvec(tx) * Yvec(tx);
-			K(tx, tx) += variance;
+			K(tx, tx) += std::max(variance, 0.001);
 		}
 		auto solve = K.llt();
 		if (solve.info() != Eigen::Success)

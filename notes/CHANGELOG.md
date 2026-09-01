@@ -5,6 +5,16 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+* Added version-querying support
+
+### Changed
+
+* Updated to JSL 3.3.3
+
 ## 0.1.0 2026-08-06
 
 This is the pre-release version of the code which is being tested by our students. This does not yet represent the full scope of the FADE Emulator (it is missing the Posterior Predictive and the associated Hessian-estimation) .

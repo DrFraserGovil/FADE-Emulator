@@ -96,11 +96,11 @@ std::set<FADE::QueryPoint> GetQueries()
 				}
 				else
 				{
-					if (vec.size() == N + 2)
+					if (vec.size() > N)
 					{
-						std::vector<double> p{std::move(vec[vec.size() - 2]), std::move(vec.back())};
+						std::vector<double> p{std::move(vec[2]), std::move(vec.back())};
 						auto grid = JSL::Vector::range(p[0], p[1], Settings.Resolution);
-						vec.resize(vec.size() - 2);
+						vec.resize(vec.size() - grid.size());
 						out.insert({vec, grid, {}});
 						// out[vec] = {vec, p};
 					}
