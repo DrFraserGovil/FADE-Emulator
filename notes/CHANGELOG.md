@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
 ### Added
 
 * Added version-querying support
 
 ### Changed
 
+* Updated the build system to the more streamlined approach
 * Updated to JSL 3.3.3
+* Overhauled the training data to emphasis replicate importance: training data now innately allows clustering
 
 ## 0.1.0 2026-08-06
 

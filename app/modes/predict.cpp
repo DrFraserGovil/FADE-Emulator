@@ -87,11 +87,11 @@ std::set<FADE::QueryPoint> GetQueries()
 				auto vec = JSL::String::ParseTo<std::vector<double>>(line, " ");
 				if (vec.size() == N)
 				{
-					if (out.contains({vec, {}, {}}))
+					if (out.contains({vec, {}, {}, {}}))
 					{
 						LOG(WARN) << "Duplicate queries for " << vec << " detected; defaulting to moment-based range";
 					}
-					QueryPoint qp{vec, {}, {}};
+					QueryPoint qp{vec, {}, {}, {}};
 					out.insert(qp);
 				}
 				else
@@ -100,9 +100,8 @@ std::set<FADE::QueryPoint> GetQueries()
 					{
 						std::vector<double> p{std::move(vec[2]), std::move(vec.back())};
 						auto grid = JSL::Vector::range(p[0], p[1], Settings.Resolution);
-						vec.resize(vec.size() - grid.size());
-						out.insert({vec, grid, {}});
-						// out[vec] = {vec, p};
+						vec.resize(vec.size() - 2);
+						out.insert({vec, grid, {}, {}});
 					}
 					else
 					{

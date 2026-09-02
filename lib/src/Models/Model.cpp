@@ -40,10 +40,10 @@ namespace FADE
 
 		Save(data);
 	}
-	void Model::Train(std::vector<TrainingPoint> &data, sint extraThreads)
+	void Model::Train(std::vector<ClusteredData> &data, sint extraThreads)
 	{
 
-		TrainingData group(data, Settings.Train.ValidationFraction, Settings.Train.ClusteringRadius);
+		TrainingData group(data, Settings.Train.ValidationFraction);
 		Train(group, extraThreads);
 	}
 
@@ -104,18 +104,18 @@ namespace FADE
 			for (auto &[id, model] : Models)
 			{
 				model.SetPosition(query.EmulationPoint);
-				std::ostringstream os;
-
-				// for (sint ne = 0; ne < id.second; ++ne)
-				// {
-				// 	os << "Expert " << ne << "\n";
-				// 	for (sint p = 0; p < Settings.Hyper.ModeCount; ++p)
-				// 	{
-				// 		os << "\t(pi,mu,sigma) = " << model.Parameters.ExpertPi(ne, p) << " / " << model.Parameters.ExpertMu(ne, p) << " / " << model.Parameters.ExpertV(ne, p) << "\n";
-				// 	}
-				// 	os << "\n";
-				// }
-				LOG(INFO) << os.str();
+				// std::ostringstream os;
+				//
+				// // for (sint ne = 0; ne < id.second; ++ne)
+				// // {
+				// // 	os << "Expert " << ne << "\n";
+				// // 	for (sint p = 0; p < Settings.Hyper.ModeCount; ++p)
+				// // 	{
+				// // 		os << "\t(pi,mu,sigma) = " << model.Parameters.ExpertPi(ne, p) << " / " << model.Parameters.ExpertMu(ne, p) << " / " << model.Parameters.ExpertV(ne, p) << "\n";
+				// // 	}
+				// // 	os << "\n";
+				// // }
+				// LOG(INFO) << os.str();
 
 				for (sint j = 0; j < N; ++j)
 				{
@@ -176,6 +176,9 @@ namespace FADE
 
 		/// DATA CORRECTION
 		sint Ntrain = data.Training.size();
+		bool first = true;
+		double minDev = 0;
+		double maxDev = 0;
 		Eigen::VectorXd k = Eigen::VectorXd::Zero(Nval);
 		for (sint i = 0; i < Ntrain; ++i)
 		{
@@ -193,8 +196,21 @@ namespace FADE
 			for (sint a = 0; a < data.Training[i].Values.size(); ++a)
 			{
 				data.Training[i].Values[a] -= prediction;
+				double corr = data.Training[i].Values[a];
+				if (first || corr < minDev)
+				{
+					minDev = corr;
+				}
+				if (first || corr > maxDev)
+				{
+					maxDev = corr;
+				}
+				first = false;
 			}
 		}
+		data.minExpectedMu = minDev;
+		data.maxExpectedMu = maxDev;
+		LOG(INFO) << "The data has residual range [" << minDev << ", " << maxDev << "]";
 	}
 	void Model::ConstructModels()
 	{

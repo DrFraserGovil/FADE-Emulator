@@ -3,22 +3,16 @@
 #include <vector>
 namespace FADE
 {
-	struct TrainingPoint
-	{
-		std::vector<double> Position;
-		double Weight;
-		double Value;
-		TrainingPoint(std::vector<double> &vec, const size_t &size);
-	};
 
 	struct ClusteredData
 	{
 		std::vector<double> Position;
 		std::vector<double> Values;
 		std::vector<double> LogWeights;
-		ClusteredData(TrainingPoint &x);
-		double DistanceTo(TrainingPoint &x);
-		void Add(TrainingPoint &x);
+		ClusteredData(std::vector<double> &vec, const size_t &xDimension);
+
+		// double DistanceTo(TrainingPoint &x);
+		// void Add(TrainingPoint &x);
 	};
 
 	class TrainingData
@@ -26,8 +20,11 @@ namespace FADE
 	  public:
 		std::vector<ClusteredData> Training;
 		std::vector<ClusteredData> Validation;
-		TrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize);
+		TrainingData(std::vector<ClusteredData> &data, double fraction);
 		std::array<std::vector<double>, 2> GetBounds();
+
+		double minExpectedMu = -5;
+		double maxExpectedMu = 5;
 
 	  private:
 		std::vector<double> bottomLeft;

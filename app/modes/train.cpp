@@ -6,9 +6,9 @@
 #include <JSL.h>
 #include <vector>
 using namespace FADE;
-std::vector<TrainingPoint> ExtractData(std::set<std::filesystem::path> files, ModelSettings &model)
+std::vector<ClusteredData> ExtractData(std::set<std::filesystem::path> files, ModelSettings &model)
 {
-	std::vector<TrainingPoint> out;
+	std::vector<ClusteredData> out;
 	auto tmp = JSL::Log::Indent();
 
 	for (auto &f : files)
@@ -32,7 +32,7 @@ std::vector<TrainingPoint> ExtractData(std::set<std::filesystem::path> files, Mo
 		}
 		catch (...)
 		{
-			LOG(WARN) << f << " not a valid inference query file";
+			LOG(WARN) << f << " not a valid training data file";
 		}
 		if (warnCount > 0)
 		{

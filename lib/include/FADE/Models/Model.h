@@ -11,7 +11,7 @@ namespace FADE
 		Model(ModelSettings &settings);
 
 		void Train(TrainingData &data, sint extraThreads = 0);
-		void Train(std::vector<TrainingPoint> &data, sint extraThreads = 0);
+		void Train(std::vector<ClusteredData> &data, sint extraThreads = 0);
 
 		Submodel &operator[](std::pair<sint, sint> idx);
 
