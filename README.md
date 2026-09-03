@@ -114,13 +114,13 @@ This will create a directory called `model` which contains all of the internal m
 In order to create a new model, the user must provide **training data**. The expected format is as follows (assuming $\mathbf{x}$ is multidimensional, and $y$ is unidimensional):
  
 ```
-x_1 x_2 (...) x_n z_1 y_1
-w_1 w_2 (...) w_n z_2 y_2
+x_1 x_2 (...) x_n z_11 y_11 z_12 y_12 (...) z_1m y_1m
+w_1 w_2 (...) w_n z_21 y_21 z_22 y_22 (...)
 (...)
 ```
 
-This represents the observation tuples $(\mathbf{x}, \zeta_1, y_1)$ and ($\mathbf{w}, \zeta_2, y_2)$, where $\mathbf{x}$ is the point in emulation space, $\zeta_i$ is the **prior weighting** (if you don't know what this means, use $\zeta = 1$), and $y$ is the observed value. Values of $\mathbf{x}$ are not required to be unique; in the case of stochastic models or latent variables, it will most likely be the case that there are manu such values.
- 
+Each row represents an observation at a point $\mathbf{x}_i$, each of which can have $n$ observations; the pairs $(z_i^j, y_i^j)$. The $z_i^j$ value is the **prior weighting** of this point  (if you don't know what this means, use $z_i^j = 1$ throughout), and $y_^j$ are the observed values at the point in emulation space. Values of $\mathbf{x}$ are not required to be unique but the model will be more efficient if data is aggregated into 'unique' $\mathbf{x}$ groups at this stage. 
+
  Once the training data is in the correct format, the model may be trained:
 
 ```
