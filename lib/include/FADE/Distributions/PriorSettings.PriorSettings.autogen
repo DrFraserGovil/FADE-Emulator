@@ -11,5 +11,6 @@ void FieldList(Wrapper &&W)
 	W(JSL::Interface::Field<double>(priorVarAlpha, "priorVarAlpha", {"prior-var-alpha"}, 1, "The strength of the prior which pushes variances away from zero in the absence of data"));
 	W(JSL::Interface::Field<double>(priorVarValue, "priorVarValue", {"prior-var-value"}, 1, "The variance that the prior pulls towards"));
 	W(JSL::Interface::Field<double>(PriorStrength, "PriorStrength", {"prior-strength"}, 1e-7, "The overall strength of the prior"));
-	W(JSL::Interface::Field<double>(blpScale, "blpScale", {"blp-length"}, 0.1, "The length scale of the BLP fitting"));
+	W(JSL::Interface::Field<double>(blpScale, "blpScale", {"blp-scale"}, 0.1, "The length scale of the BLP fitting\nThe per-dimensional scale length is blpScale * range(dim), where the range is the maximum extend of the input data in that dimension. I.e. a scale of 0.1 means that 10 scale lengths fit into each dimension"));
+	W(JSL::Interface::Field<std::optional<std::vector<double>>>(blpLengths, "blpLengths", {"blp-lengths"}, {}, "Overrides for the BLP-scale lengths. If set, blpScale is ignored"));
 }

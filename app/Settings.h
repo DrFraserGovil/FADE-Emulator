@@ -2,11 +2,12 @@
 #include <JSL/Interface/Aggregator.h>
 #include <filesystem>
 #include <set>
+using namespace FADE;
 //! @name Basic Settings
 //! @command test Enters the testing mode for basic diagnostics
 //! @command train Activates training mode
+//! @command predict Activates inference mode
 //! @command [file] All other positional arguments are interpreted as input files (meaning varies by mode)
-using namespace FADE;
 class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 {
   public:

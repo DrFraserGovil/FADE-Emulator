@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 * Implemented the auto-range detection for inference bounding
 * Added the CDF as a line in the output files
-
+* BLP-autoscaling now allows per-dimensional assignment of lengthscales, and the setting of scales as fractions of the span
 ### Changed
 
 * Updated the readme to reflect the changes induced in 0.2.0

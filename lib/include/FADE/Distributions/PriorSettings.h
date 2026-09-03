@@ -47,8 +47,13 @@ namespace FADE
 		double PriorStrength = 1e-7;
 
 		//! @brief The length scale of the BLP fitting
-		//! @alias blp-length
+		//! @details The per-dimensional scale length is blpScale * range(dim), where the range is the maximum extend of the input data in that dimension. I.e. a scale of 0.1 means that 10 scale lengths fit into each dimension
+		//! @alias blp-scale
 		double blpScale = 0.1;
+
+		//! @brief Overrides for the BLP-scale lengths. If set, blpScale is ignored
+		//! @alias blp-lengths
+		std::optional<std::vector<double>> blpLengths;
 
 		double minMu;
 		double maxMu;

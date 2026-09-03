@@ -20,15 +20,15 @@ namespace FADE
 		if (Settings.Prior.PriorBottomLeft.size() != bottomLeft.size())
 		{
 			Settings.Prior.PriorBottomLeft = bottomLeft;
-			LOG(INFO) << "The BL-bound has been infered to be " << bottomLeft;
+			LOG(INFO) << "\tThe BL-bound has been infered to be " << bottomLeft;
 		}
 		if (Settings.Prior.PriorTopRight.size() != topRight.size())
 		{
 			Settings.Prior.PriorTopRight = topRight;
-			LOG(INFO) << "The TR-bound has been infered to be " << topRight;
+			LOG(INFO) << "\tThe TR-bound has been infered to be " << topRight;
 		}
 
-		BLPFit(data);
+		BLPFit(data, bottomLeft, topRight);
 		// i.e. if we didn't just load in a pre-existing  model
 		if (!Settings.Infer.ModelFile)
 		{
@@ -138,14 +138,35 @@ namespace FADE
 		}
 	}
 
-	void Model::BLPFit(TrainingData &data)
+	void Model::BLPFit(TrainingData &data, std::vector<double> &bl, std::vector<double> &tr)
 	{
+		LOG(INFO) << "Beginning BLP-mean correction";
+		auto tmp = JSL::Log::Indent();
 		sint Nval = data.Validation.size();
 		Eigen::MatrixXd K = Eigen::MatrixXd::Zero(Nval, Nval);
 		Eigen::VectorXd Yvec = Eigen::VectorXd::Zero(Nval);
 
 		double lscle = Settings.Prior.blpScale;
-
+		sint dim = Settings.Hyper.InputDimension;
+		std::vector<double> scales(dim);
+		if (Settings.Prior.blpLengths)
+		{
+			scales = Settings.Prior.blpLengths.value();
+			if (scales.size() != dim)
+			{
+				LOG(ERROR) << "Manual scale lengths set, but their dimensions do not match: " << scales;
+				exit(1);
+			}
+			LOG(INFO) << "Manual scale lengths set";
+		}
+		else
+		{
+			for (sint i = 0; i < dim; ++i)
+			{
+				scales[i] = (tr[i] - bl[i]) * Settings.Prior.blpScale;
+			}
+			LOG(INFO) << "Scale lengths inferred to be " << scales << " from a per-dimensional scaling factor of " << Settings.Prior.blpScale;
+		}
 		for (sint tx = 0; tx < Nval; ++tx)
 		{
 			// Eigen::VectorXd px(data.Training[tx].Position);

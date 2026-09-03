@@ -155,8 +155,8 @@ namespace FADE
 	}
 	double Submodel::EstimateCDFPos(double val)
 	{
-		val = std::max(val, 1e-10);
-		val = std::min(1 - 1e-10, val);
+		val = std::max(val, 1e-5);
+		val = std::min(1 - 1e-5, val);
 		auto muCop = Mus;
 		auto vCop = Vrs;
 		std::sort(muCop.begin(), muCop.end());
@@ -165,21 +165,23 @@ namespace FADE
 		double lower;
 		double upper;
 
-		while (true)
+		bool located = false;
+		while (!located)
 		{
 			lower = muCop[0] - sqrt(vCop.back()) * boundFactor;
 			upper = muCop.back() + sqrt(vCop.back()) * boundFactor;
 			double lowerVal = CDF(lower);
 			double upperVal = CDF(upper);
-			if (lowerVal < val && upperVal > val)
+			if (lowerVal <= val && upperVal >= val)
 			{
+				located = true;
 				break;
 			}
 			boundFactor *= 2;
 			if (boundFactor > 100)
 			{
-				LOG(ERROR) << "Could not find the bounds of the CDF; distribution is likely malformed";
-				exit(1);
+				LOG(WARN) << "Could not find the bounds of the CDF; distribution is likely malformed";
+				located = true;
 			}
 		}
 		double mid = 0.5 * (lower + upper);
