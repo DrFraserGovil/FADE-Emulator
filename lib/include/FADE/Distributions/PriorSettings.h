@@ -49,6 +49,9 @@ namespace FADE
 		//! @brief The length scale of the BLP fitting
 		//! @alias blp-length
 		double blpScale = 0.1;
+
+		double minMu;
+		double maxMu;
 #include "PriorSettings.PriorSettings.autogen"
 	};
 } // namespace FADE

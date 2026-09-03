@@ -5,6 +5,21 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] 2026-09-03
+
+### Added
+
+* Added version-querying support
+* The positions of experts are now generated on a Latin Hypercube rather that a pure uniform random distribution 
+* A nice visual display of the training progress 
+
+### Changed
+
+* Updated the build system to the more streamlined approach
+* Updated to JSL 3.3.4
+* Overhauled the training data to emphasis replicate importance: training data now innately allows clustering
+* Improvements made to the optimisation algorithm 
+
 ## 0.1.0 2026-08-06
 
 This is the pre-release version of the code which is being tested by our students. This does not yet represent the full scope of the FADE Emulator (it is missing the Posterior Predictive and the associated Hessian-estimation) .

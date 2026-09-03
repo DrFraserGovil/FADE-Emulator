@@ -18,8 +18,9 @@ namespace FADE
 
 		bool DiceRoll(double prob);
 
-	  private:
 		std::mt19937 RandomGen;
+
+	  private:
 		std::uniform_real_distribution<double> UnifDist;
 		std::uniform_real_distribution<double> NormalDist;
 	};

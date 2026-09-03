@@ -4,45 +4,8 @@
 #include <cmath>
 namespace FADE
 {
-	TrainingPoint::TrainingPoint(std::vector<double> &vec, const size_t &size)
-	{
-		Position.resize(size);
-		for (size_t i = 0; i < size; ++i)
-		{
-			Position[i] = vec[i];
-		}
-		Weight = vec[size];
-		Value = vec[size + 1];
-	}
-	ClusteredData::ClusteredData(TrainingPoint &x)
-	{
-		Position = x.Position;
-		Values = {x.Value};
-		LogWeights = {log(x.Weight) + 1e-100};
-	}
-	double ClusteredData::DistanceTo(TrainingPoint &x)
-	{
-		double s = 0;
-		assert(x.Position.size() == Position.size());
-		for (size_t i = 0; i < Position.size(); ++i)
-		{
-			s += pow(x.Position[i] - Position[i], 2);
-		}
-		return sqrt(s);
-	}
 
-	void ClusteredData::Add(TrainingPoint &x)
-	{
-		size_t n = Values.size();
-		for (size_t i = 0; i < Position.size(); ++i)
-		{
-			Position[i] = (n * Position[i] + x.Position[i]) / (n + 1);
-		}
-		Values.push_back(x.Value);
-		LogWeights.push_back(log(x.Weight + 1e-100));
-	}
-
-	TrainingData::TrainingData(std::vector<TrainingPoint> &data, double fraction, double clusterSize)
+	TrainingData::TrainingData(std::vector<ClusteredData> &data, double fraction)
 	{
 		size_t tcount = 0;
 		size_t vcount = 0;
@@ -68,42 +31,57 @@ namespace FADE
 					}
 				}
 			}
-			double r = rand() * 1.0 / RAND_MAX;
-			std::vector<ClusteredData> *group;
-			if (r > fraction)
+			if (Random.DiceRoll(fraction))
 			{
-				group = &Training;
-				++tcount;
+				Validation.push_back(data[i]);
+				vcount += data[i].Values.size();
 			}
 			else
 			{
-				group = &Validation;
-				++vcount;
-			}
-
-			bool found = false;
-			for (auto &cluster : *group)
-			{
-				double d = cluster.DistanceTo(data[i]);
-				if (d < clusterSize)
-				{
-					cluster.Add(data[i]);
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				group->emplace_back(data[i]);
+				Training.push_back(data[i]);
+				tcount += data[i].Values.size();
 			}
 		}
 		LOG(INFO) << "The data has been clustered into:\n"
 				  << "\t" << Training.size() << " training clusters containing " << tcount << " datapoints.\n"
 				  << "\t" << Validation.size() << " validation clusters containing " << vcount << " datapoints.";
 	}
+
 	std::array<std::vector<double>, 2> TrainingData::GetBounds()
 	{
 		return {bottomLeft, topRight};
 	}
 
+	ClusteredData::ClusteredData(std::vector<double> &vec, const size_t &xDimension)
+	{
+		Position.resize(xDimension);
+
+		for (size_t i = 0; i < xDimension; ++i)
+		{
+			Position[i] = vec[i];
+		}
+		size_t leftOver = vec.size() - xDimension;
+		if (leftOver == 0)
+		{
+			LOG(ERROR) << "The provided training data contains no y values: the vector is equal in size to the input dimension";
+			exit(1);
+		}
+		if (leftOver % 2 != 0)
+		{
+			LOG(ERROR) << "There are an odd number of remaining data points: this indicates there is not a perfect prior/value split, and this training data is malformed";
+			exit(1);
+		}
+		int yCount = leftOver / 2;
+		Values.resize(yCount);
+		LogWeights.resize(yCount);
+		for (int j = 0; j < yCount; ++j)
+		{
+			int idx = xDimension + 2 * j;
+			if (vec[idx] > 1e-100)
+			{
+				LogWeights[j] = log(vec[idx]);
+				Values[j] = (vec[idx + 1]);
+			}
+		}
+	}
 } // namespace FADE

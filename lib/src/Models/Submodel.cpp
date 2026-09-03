@@ -105,7 +105,23 @@ namespace FADE
 		}
 		return score / tot + prior;
 	}
-	double Submodel::CutPrior() { return 0; }
+	double Submodel::CutPrior()
+	{
+		double s = 0;
+		for (sint e = 0; e < Ne; ++e)
+		{
+			for (sint d = 0; d < Settings.Hyper.InputDimension; ++d)
+			{
+				double x = Parameters.ExpertPosition(e, d);
+				if (x > Settings.Prior.PriorTopRight[d] || x < Settings.Prior.PriorBottomLeft[d])
+				{
+					return Settings.Train.LogZero;
+				}
+			}
+		}
+
+		return s;
+	}
 
 	double Submodel::Prior()
 	{

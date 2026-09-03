@@ -1,0 +1,4 @@
+#pragma once
+
+//uses cmake to automagically insert the current build number into the binary
+#define FADE_VERSION "@PROJECT_VERSION@"
