@@ -2,14 +2,17 @@
 #include <JSL/Interface/Aggregator.h>
 #include <filesystem>
 #include <set>
+using namespace FADE;
 //! @name Basic Settings
 //! @command test Enters the testing mode for basic diagnostics
 //! @command train Activates training mode
+//! @command predict Activates inference mode
 //! @command [file] All other positional arguments are interpreted as input files (meaning varies by mode)
-using namespace FADE;
 class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 {
   public:
+	ModelSettings Model;
+
 	//! @alias v verbose
 	//! @brief If true, recieve DEBUG level logs to the output stream. Takes priority over Quiet mode.
 	bool Verbose = false;
@@ -21,8 +24,6 @@ class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 	//! @alias file, input
 	//! @brief A set of files to be processed. Any files passed as positional arguments will also be stored here
 	std::set<std::filesystem::path> Files = {};
-
-	ModelSettings Model;
 
 	//! @alias settings
 	//! @brief If set, this value is used to save the value of the configuration file
@@ -36,9 +37,6 @@ class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 	//! @alias query-out
 	std::filesystem::path QueryOut = "QueryOutput.dat";
 
-	//! @brief The query resolution in y-space
-	//! @alias query-resolution r resolution
-	size_t Resolution = 100;
 #include "Settings.AppSettings.autogen"
 };
 

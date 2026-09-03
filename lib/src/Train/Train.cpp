@@ -150,14 +150,6 @@ namespace FADE
 			{
 				newScore = Settings.Train.LogZero;
 			}
-
-			// if (newScore == Settings.Train.LogZero)
-			// {
-			// 	// LOG(ERROR) << "Degeneracy\n"
-			// 	// 		   << Parameters.Params;
-			// 	// alpha *= 0.5;
-			// }
-			//
 			// work out if we want to accept this new proposal
 			bool accept = false;
 			bool forceRevert = false;
@@ -170,27 +162,6 @@ namespace FADE
 					bestPos.Copy(Parameters);
 
 					bestScore = newScore;
-
-					// LOG(INFO) << JSL::Display::Green() << "New best: " << bestScore;
-					// for (sint e = 0; e < Ne; ++e)
-					// {
-					// 	std::ostringstream os;
-					// 	os << "Expert " << e + 1 << " is at ";
-					// 	for (sint d = 0; d < currentPos.Hyper.InputDimension; ++d)
-					// 	{
-					// 		if (d > 0) os << ", ";
-					// 		os << currentPos.ExpertPosition(e, d);
-					// 	}
-					// 	os << " and has mu = (";
-					// 	for (sint p = 0; p < currentPos.Hyper.ModeCount; ++p)
-					// 	{
-					// 		if (p > 0) os << ", ";
-					// 		os << currentPos.ExpertMu(e, p);
-					// 	}
-					// 	os << ")";
-					// 	os << " and scale " << currentPos.ExpertScale(e);
-					// 	LOG(INFO) << os.str();
-					// }
 					timeSinceBest = 0;
 					revertsSinceBest = 0;
 					alpha *= 2;

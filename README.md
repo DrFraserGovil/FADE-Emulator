@@ -11,9 +11,9 @@ git clone https://github.com/DrFraserGovil/FADE-Emulator
 ```
 
 The code must then be compiled, which requires:
-1. A C++20-compliant compiler (such as `cc-13` `lang-16` `pple-clang-15` `svc-2019`
+1. A C++20-compliant compiler (such as `gcc-13` `clang-16` `apple-clang-15` `msvc-2019`
 2. `make >= 3.15`
-3. An internet connection (for `etchContent`calls, which grab [Eigen](https://libeigen.gitlab.io/) and [a library by the FADE author](https://github.com/DrFraserGovil/JSL))
+3. An internet connection (for `FetchContent` calls, which grab [Eigen](https://libeigen.gitlab.io/) and [a library by the FADE author](https://github.com/DrFraserGovil/JSL))
 
 The build system can be activated by calling:
 
@@ -22,7 +22,7 @@ cd FADE-Emulator
 make
 ```
  
-This has been [validated to compile on Ubuntu, macOS and Windows](https://github.com/DrFraserGovil/JSL/actions/). macOS and linux users will find the `ade`binary appearing in their current working directory; MSVC users will find `ade.exe`inside a directory depending on their default compiler options -- probably `ebug/fade.exe`
+This has been [validated to compile on Ubuntu, macOS and Windows](https://github.com/DrFraserGovil/JSL/actions/). macOS and linux users will find the `fade` binary appearing in their current working directory; MSVC users will find `fade.exe` inside a directory depending on their default compiler options -- probably `Release/fade.exe`
 
 
 
@@ -53,7 +53,7 @@ Changing the value is done in one of two ways:
 
 #### Command Line Arguments
 
-Running the `/fade`executable and adding extra arguments after it:
+Running the `./fade` executable and adding extra arguments after it:
 
 ```
 ./fade train -expert 3,3 -model my_file.fde -file training_data.dat
@@ -66,7 +66,7 @@ This will attempt to launch the training module with:
 * Using the training data stored in training_data.dat
 * All other values will use their default value.
 
-Note that some parameters have multiple aliases which can be used: `input`and `-file`have the same meaning. This is detailed in the help menu.
+Note that some parameters have multiple aliases which can be used: `-input` and `--file` have the same meaning. This is detailed in the help menu.
 
 #### Configuration files
 
@@ -101,33 +101,33 @@ When specifying command line variables, any number of dashes are allowed: --flag
 When specifying variables in a config-file, do not use leading dashes.
 ### Filetypes
 
-FADE is largely indifferent to the file extensions which are given to it. By default, models are saved with the custom extension "`fde`, though this is not mandated. `fde`files are [tar archives](https://en.wikipedia.org/wiki/Tar_(computing)), and may be extracted either with an external manager (though on Windows, they may not like the lack of proper file extensions). Alternatively, the code comes with a custom unpacker:
+FADE is largely indifferent to the file extensions which are given to it. By default, models are saved with the custom extension "`.fde`", though this is not mandated. `.fde` files are [tar archives](https://en.wikipedia.org/wiki/Tar_(computing)), and may be extracted either with an external manager (though on Windows, they may not like the lack of proper file extensions). Alternatively, the code comes with a custom unpacker:
 
 ```
 fade unpack model.fde
 ```
 
-This will create a directory called `odel` which contains all of the internal model files.
+This will create a directory called `model` which contains all of the internal model files.
 
 ## Training Models
 
 In order to create a new model, the user must provide **training data**. The expected format is as follows (assuming $\mathbf{x}$ is multidimensional, and $y$ is unidimensional):
  
 ```
-x_1 x_2 (...) x_n z_1 y_1
-w_1 w_2 (...) w_n z_2 y_2
+x_1 x_2 (...) x_n z_11 y_11 z_12 y_12 (...) z_1m y_1m
+w_1 w_2 (...) w_n z_21 y_21 z_22 y_22 (...)
 (...)
 ```
 
-This represents the observation tuples $(\mathbf{x}, \zeta_1, y_1)$ and ($\mathbf{w}, \zeta_2, y_2)$, where $\mathbf{x}$ is the point in emulation space, $\zeta_i$ is the **prior weighting** (if you don't know what this means, use $\zeta = 1$), and $y$ is the observed value. Values of $\mathbf{x}$ are not required to be unique; in the case of stochastic models or latent variables, it will most likely be the case that there are manu such values.
- 
+Each row represents an observation at a point $\mathbf{x}$, each of which can have $n$ observations; the pairs $(z_i^j, y_i^j)$. The $z_i^j$ value is the **prior weighting** of this point  (if you don't know what this means, use $z_i^j = 1$ throughout), and $y_i^j$ are the observed values at the point in emulation space. Values of $\mathbf{x}$ are not required to be unique but the model will be more efficient if data is aggregated into 'unique' $\mathbf{x}$ groups at this stage. 
+
  Once the training data is in the correct format, the model may be trained:
 
 ```
 ./fade train --file training.data --save my_model.fde --expert 3,6 --dep 2,4
 ```
 
-This will generate a model called `y_model.fde`which has been trained on the provided data. This will also simultaneously train the set of submodels for $3 \leq N_e \leq 6$ and $2 \leq N_d \leq 4$ (for a total of 12 individual models). At present, this is merely for convenience, as no posterior predictive is generated.
+This will generate a model called `my_model.fde` which has been trained on the provided data. This will also simultaneously train the set of submodels for $3 \leq N_e \leq 6$ and $2 \leq N_d \leq 4$ (for a total of 12 individual models). At present, this is merely for convenience, as no posterior predictive is generated.
 
 ## Using Models
 
@@ -141,7 +141,7 @@ w_0 w_1 w_2 (...) w_n u_1 u_2 u_3 (...) u_m
 (...)
 ```
 
-As with the training data, the `x_0 ...x_n`specify the values of $\mathbf{x}$, a point in emulation space to be queried. The values of $y_1...y_m$ form an array of samples of the density that the model will be evaluated on: so specifying `x_0 y_1 y_2 ..`means `t position $\mathbf{x}$, tell me the probability density at $y_0$, then $y_1$, then $y_2$.'' There is no requirement that $\{y_i\}$ be sorted or uniform.
+As with the training data, the `x_0 ...x_n` specify the values of $\mathbf{x}$, a point in emulation space to be queried. The values of $y_1...y_m$ form an array of samples of the density that the model will be evaluated on: so specifying `x_0 y_1 y_2 ..` means `t position $\mathbf{x}$, tell me the probability density at $y_0$, then $y_1$, then $y_2$.'' There is no requirement that $\{y_i\}$ be sorted or uniform.
 
 Multiple $\mathbf{x}$-queries can be entered, with each new $\mathbf{x}-y$ prediction entered on a new line.
 

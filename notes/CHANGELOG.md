@@ -5,6 +5,22 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] 2026-09-03
+
+### Added
+
+* Implemented the auto-range detection for inference bounding
+* Added the CDF as a line in the output files
+* BLP-autoscaling now allows per-dimensional assignment of lengthscales, and the setting of scales as fractions of the span
+ 
+### Changed
+
+* Updated the readme to reflect the changes induced in 0.2.0
+* The -expert and -dep flags are now single values (the pair-args are now -expertRange and -depRange)
+### Removed
+
+* A handful of settings which had no effect on how the code functions
+
 ## [0.2.0] 2026-09-03
 
 ### Added
@@ -20,7 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * Overhauled the training data to emphasis replicate importance: training data now innately allows clustering
 * Improvements made to the optimisation algorithm 
 
-## 0.1.0 2026-08-06
+## [0.1.0] 2026-08-06
 
 This is the pre-release version of the code which is being tested by our students. This does not yet represent the full scope of the FADE Emulator (it is missing the Posterior Predictive and the associated Hessian-estimation) .
 

@@ -1,6 +1,6 @@
 #include "../Settings.h"
 #include "../modes.h"
-#include "FADE/Infer/InferPoint.h"
+#include "FADE/Infer/QueryPoint.h"
 #include <FADE/ModelSettings.h>
 #include <FADE/Models/Model.h>
 #include <FADE/Train/Train.h>
@@ -87,21 +87,28 @@ std::set<FADE::QueryPoint> GetQueries()
 				auto vec = JSL::String::ParseTo<std::vector<double>>(line, " ");
 				if (vec.size() == N)
 				{
-					if (out.contains({vec, {}, {}, {}}))
+					QueryPoint test(vec);
+					if (out.contains(test))
 					{
-						LOG(WARN) << "Duplicate queries for " << vec << " detected; defaulting to moment-based range";
+						LOG(WARN) << "Duplicate queries for " << vec << " detected. Only a single query will be made at this point";
 					}
-					QueryPoint qp{vec, {}, {}, {}};
-					out.insert(qp);
+					else
+					{
+						out.insert(test);
+					}
 				}
 				else
 				{
-					if (vec.size() > N)
+					if (vec.size() == N + 2)
 					{
-						std::vector<double> p{std::move(vec[2]), std::move(vec.back())};
-						auto grid = JSL::Vector::range(p[0], p[1], Settings.Resolution);
+						std::vector<double> p{std::move(vec[2]), std::move(vec[3])};
 						vec.resize(vec.size() - 2);
-						out.insert({vec, grid, {}, {}});
+						QueryPoint test(vec, p[0], p[1], Settings.Model.Infer.Resolution);
+						if (out.contains(test))
+						{
+							LOG(WARN) << "Duplicate queries for " << vec << "; previous query overwritten by the one bounded at " << p[0] << "->" << p[1];
+						}
+						out.insert(test);
 					}
 					else
 					{
@@ -137,24 +144,26 @@ void Predict(std::set<std::filesystem::path> paths)
 	Settings.Model = model.GetSettings();
 	std::set<QueryPoint> out = GetQueries();
 
-	bool haveWarned = false;
-	for (auto &p : out)
-	{
-		if (p.PredictionGrid.empty())
-		{
-			if (!haveWarned)
-			{
-				LOG(WARN) << "Adaptive grid sizes are not yet supported; defaulting to a preset grid";
-				haveWarned = true;
-			}
-			p.PredictionGrid = JSL::Vector::range(-0.1, 1.5, Settings.Resolution);
-		}
-	}
+	// bool haveWarned = false;
+	// for (auto &p : out)
+	// {
+	// 	if (p.PredictionGrid.empty())
+	// 	{
+	// 		if (!haveWarned)
+	// 		{
+	// 			LOG(WARN) << "Adaptive grid sizes are not yet supported; defaulting to a preset grid";
+	// 			haveWarned = true;
+	// 		}
+	// 		p.PredictionGrid = JSL::Vector::range(-0.1, 1.5, Settings.Infer.Resolution);
+	// 	}
+	// }
 
 	model.Predict(out);
 
-	auto nd = Settings.Model.Hyper.Departments;
-	auto ne = Settings.Model.Hyper.Experts;
+	Settings.Model.Hyper.SetRanges();
+	auto nd = Settings.Model.Hyper.DepartmentRange;
+	auto ne = Settings.Model.Hyper.ExpertRange;
+
 	for (sint k = nd.first; k <= nd.second; ++k)
 	{
 		for (sint i = ne.first; i <= ne.second; ++i)
@@ -188,7 +197,7 @@ void Predict(std::set<std::filesystem::path> paths)
 				{
 					stream << " " << q.PredictionGrid[r];
 				}
-				auto &pred = q.SubmodelValues[{k, i}];
+				auto &pred = q.SubmodelProbability[{k, i}];
 				N = pred.size();
 				stream << "\n"
 					   << pred[0];
@@ -196,33 +205,16 @@ void Predict(std::set<std::filesystem::path> paths)
 				{
 					stream << " " << pred[r];
 				}
+				auto &cdf = q.SubmodelCDF[{k, i}];
+				stream << "\n"
+					   << cdf[0];
+				for (sint r = 1; r < N; ++r)
+				{
+					stream << " " << cdf[r];
+				}
 				stream << "\n";
 			}
 			stream.close();
 		}
 	}
-	// for (auto &q : out)
-	// {
-	// 	stream << "New query: " << q.EmulationPoint[0];
-	// 	for (sint r = 1; r < q.EmulationPoint.size(); ++r)
-	// 	{
-	// 		stream << " " << q.EmulationPoint[r];
-	// 	}
-	// 	stream << "\n";
-	// 	stream << q.PredictionGrid[0];
-	// 	sint N = q.PredictionGrid.size();
-	// 	for (sint r = 1; r < N; ++r)
-	// 	{
-	// 		stream << " " << q.PredictionGrid[r];
-	// 	}
-	// 	N = q.PredictionValues.size();
-	// 	stream << "\n"
-	// 		   << q.PredictionValues[0];
-	// 	for (sint r = 1; r < N; ++r)
-	// 	{
-	// 		stream << " " << q.PredictionValues[r];
-	// 	}
-	// 	stream << "\n";
-	// }
-	// stream.close();
 }

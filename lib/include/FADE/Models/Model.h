@@ -1,7 +1,7 @@
 #pragma once
 #include "Submodel.h"
 #include <Eigen/Dense>
-#include <FADE/Infer/InferPoint.h>
+#include <FADE/Infer/QueryPoint.h>
 #include <filesystem>
 namespace FADE
 {
@@ -26,7 +26,7 @@ namespace FADE
 	  private:
 		ModelSettings Settings;
 
-		void BLPFit(TrainingData &data);
+		void BLPFit(TrainingData &data, std::vector<double> &bl, std::vector<double> &tr);
 		Eigen::VectorXd KinvY;
 		std::vector<Eigen::VectorXd> BLPPos;
 

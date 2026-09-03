@@ -37,6 +37,9 @@ namespace FADE
 		double Prior();
 		std::vector<double> QueryExperts(std::vector<double> pos);
 
+		std::pair<double, double> GetBounds(double threshold);
+		double EstimateCDFPos(double val);
+		double CDF(double x);
 		std::vector<double> Mus;
 		std::vector<double> Pis;
 		std::vector<double> Vrs;

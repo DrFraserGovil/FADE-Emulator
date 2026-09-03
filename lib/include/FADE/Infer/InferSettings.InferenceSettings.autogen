@@ -7,4 +7,6 @@ void FieldList(Wrapper &&W)
 {
 	Name = "InferenceSettings";
 	W(Field<std::optional<std::string>>(ModelFile, "ModelFile", {"m", "model"}, std::nullopt, "The model to be used for prediction\nIf no value provided, the Files will be searched for a valid model file; otherwise the code will exit with an error."));
+	W(Field<size_t>(Resolution, "Resolution", {"query-resolution", "r", "resolution"}, 100, "The query resolution in y-space"));
+	W(Field<double>(CDFBound, "CDFBound", {"infer-bound"}, 0.001, "The CDF threshold at which the auto-inference takes place\nIf a bound is not specified on the y-range, the bounds are placed such that the CDF is bounded at [threshold, 1-threshold]"));
 }

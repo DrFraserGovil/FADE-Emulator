@@ -1,5 +1,5 @@
 #include <FADE/Models/Model.h>
-
+#include <JSL/Vectors/Range.h>
 namespace FADE
 {
 
@@ -20,15 +20,15 @@ namespace FADE
 		if (Settings.Prior.PriorBottomLeft.size() != bottomLeft.size())
 		{
 			Settings.Prior.PriorBottomLeft = bottomLeft;
-			LOG(INFO) << "The BL-bound has been infered to be " << bottomLeft;
+			LOG(INFO) << "\tThe BL-bound has been infered to be " << bottomLeft;
 		}
 		if (Settings.Prior.PriorTopRight.size() != topRight.size())
 		{
 			Settings.Prior.PriorTopRight = topRight;
-			LOG(INFO) << "The TR-bound has been infered to be " << topRight;
+			LOG(INFO) << "\tThe TR-bound has been infered to be " << topRight;
 		}
 
-		BLPFit(data);
+		BLPFit(data, bottomLeft, topRight);
 		// i.e. if we didn't just load in a pre-existing  model
 		if (!Settings.Infer.ModelFile)
 		{
@@ -67,8 +67,10 @@ namespace FADE
 			exit(1);
 		}
 
+		auto oldInfer = Settings.Infer;
 		auto lines = vault["train.config"].AsLines();
 		Settings.Configure(lines, " ");
+		Settings.Infer = oldInfer; // inference settings are *not* overwritten from file
 		ConstructModels();
 		BLPLoad(vault);
 		forAllModels([&vault](auto &model) { model.Load(vault); model.SyncParameters(); });
@@ -81,11 +83,19 @@ namespace FADE
 		LOG(INFO) << "Beginning inference loop";
 		auto tmp = JSL::Log::Indent();
 
-		std::vector<double> out;
+		std::vector<double> probVec;
+		std::vector<double> cdfVec;
 		for (auto &query : queries)
 		{
 			sint N = query.PredictionGrid.size();
-			out.resize(N);
+			bool requiresBounding = false;
+			if (N == 0)
+			{
+				requiresBounding = true;
+				N = Settings.Infer.Resolution;
+			}
+			probVec.resize(N);
+			cdfVec.resize(N);
 			// query.PredictionValues.resize(N);
 			LOG(INFO) << "Inferring at position" << query.EmulationPoint;
 			std::vector<double> p = query.EmulationPoint;
@@ -104,26 +114,59 @@ namespace FADE
 			for (auto &[id, model] : Models)
 			{
 				model.SetPosition(query.EmulationPoint);
-
+				if (requiresBounding)
+				{
+					LOG(INFO) << JSL::Display::Green() << "Auto-bounding was requested.";
+					double thresh = Settings.Infer.CDFBound;
+					auto [l, u] = model.GetBounds(thresh);
+					l += prediction;
+					u += prediction;
+					LOG(INFO) << "\tThe [" << thresh << ", " << 1.0 - thresh << "] boundary is [" << l << ", " << u << "]";
+					query.PredictionGrid = JSL::Vector::range(l, u, N);
+				}
 				for (sint j = 0; j < N; ++j)
 				{
-					out[j] = exp(model.LogGaussian(query.PredictionGrid[j] - prediction));
+					double x = query.PredictionGrid[j] - prediction;
+					probVec[j] = exp(model.LogGaussian(x));
+					cdfVec[j] = model.CDF(x);
 				}
 
 				//! HACK: This is just whilst we're on single-only models
-				query.SubmodelValues[id] = out;
+				query.SubmodelProbability[id] = std::move(probVec);
+				query.SubmodelCDF[id] = std::move(cdfVec);
 			};
 		}
 	}
 
-	void Model::BLPFit(TrainingData &data)
+	void Model::BLPFit(TrainingData &data, std::vector<double> &bl, std::vector<double> &tr)
 	{
+		LOG(INFO) << "Beginning BLP-mean correction";
+		auto tmp = JSL::Log::Indent();
 		sint Nval = data.Validation.size();
 		Eigen::MatrixXd K = Eigen::MatrixXd::Zero(Nval, Nval);
 		Eigen::VectorXd Yvec = Eigen::VectorXd::Zero(Nval);
 
 		double lscle = Settings.Prior.blpScale;
-
+		sint dim = Settings.Hyper.InputDimension;
+		std::vector<double> scales(dim);
+		if (Settings.Prior.blpLengths)
+		{
+			scales = Settings.Prior.blpLengths.value();
+			if (scales.size() != dim)
+			{
+				LOG(ERROR) << "Manual scale lengths set, but their dimensions do not match: " << scales;
+				exit(1);
+			}
+			LOG(INFO) << "Manual scale lengths set";
+		}
+		else
+		{
+			for (sint i = 0; i < dim; ++i)
+			{
+				scales[i] = (tr[i] - bl[i]) * Settings.Prior.blpScale;
+			}
+			LOG(INFO) << "Scale lengths inferred to be " << scales << " from a per-dimensional scaling factor of " << Settings.Prior.blpScale;
+		}
 		for (sint tx = 0; tx < Nval; ++tx)
 		{
 			// Eigen::VectorXd px(data.Training[tx].Position);
@@ -207,10 +250,10 @@ namespace FADE
 	}
 	void Model::ConstructModels()
 	{
-
-		for (sint nd = Settings.Hyper.Departments.first; nd <= Settings.Hyper.Departments.second; ++nd)
+		Settings.Hyper.SetRanges();
+		for (sint nd = Settings.Hyper.DepartmentRange.first; nd <= Settings.Hyper.DepartmentRange.second; ++nd)
 		{
-			for (sint ne = Settings.Hyper.Experts.first; ne <= Settings.Hyper.Experts.second; ++ne)
+			for (sint ne = Settings.Hyper.ExpertRange.first; ne <= Settings.Hyper.ExpertRange.second; ++ne)
 			{
 				Models.try_emplace({nd, ne}, Settings, nd, ne);
 			}
