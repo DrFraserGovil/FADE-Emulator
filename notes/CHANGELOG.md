@@ -5,8 +5,7 @@
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
+## [0.2.0] 2026-09-03
 
 ### Added
 
@@ -17,7 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 
 * Updated the build system to the more streamlined approach
-* Updated to JSL 3.3.3
+* Updated to JSL 3.3.4
 * Overhauled the training data to emphasis replicate importance: training data now innately allows clustering
 * Improvements made to the optimisation algorithm 
 
