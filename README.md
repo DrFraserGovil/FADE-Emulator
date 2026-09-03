@@ -119,7 +119,7 @@ w_1 w_2 (...) w_n z_21 y_21 z_22 y_22 (...)
 (...)
 ```
 
-Each row represents an observation at a point $\mathbf{x}_i$, each of which can have $n$ observations; the pairs $(z_i^j, y_i^j)$. The $z_i^j$ value is the **prior weighting** of this point  (if you don't know what this means, use $z_i^j = 1$ throughout), and $y_^j$ are the observed values at the point in emulation space. Values of $\mathbf{x}$ are not required to be unique but the model will be more efficient if data is aggregated into 'unique' $\mathbf{x}$ groups at this stage. 
+Each row represents an observation at a point $\mathbf{x}$, each of which can have $n$ observations; the pairs $(z_i^j, y_i^j)$. The $z_i^j$ value is the **prior weighting** of this point  (if you don't know what this means, use $z_i^j = 1$ throughout), and $y_^j$ are the observed values at the point in emulation space. Values of $\mathbf{x}$ are not required to be unique but the model will be more efficient if data is aggregated into 'unique' $\mathbf{x}$ groups at this stage. 
 
  Once the training data is in the correct format, the model may be trained:
 
