@@ -28,13 +28,12 @@ namespace FADE
 			LOG(INFO) << "The TR-bound has been infered to be " << topRight;
 		}
 
+		BLPFit(data);
 		// i.e. if we didn't just load in a pre-existing  model
 		if (!Settings.Infer.ModelFile)
 		{
 			forAllModels([&](auto &model) { model.Parameters.Randomise(Settings.Prior); });
 		}
-
-		BLPFit(data);
 
 		forAllModels([&](auto &model) { model.Train(data); });
 
@@ -100,22 +99,11 @@ namespace FADE
 				k(i) = exp(-0.5 * dsq / (l * l));
 			}
 			double prediction = k.dot(KinvY);
+			LOG(DEBUG) << "The BLP predicts a mean of " << prediction << " at " << p;
 			// forAllModels([&](auto &model) {
 			for (auto &[id, model] : Models)
 			{
 				model.SetPosition(query.EmulationPoint);
-				// std::ostringstream os;
-				//
-				// // for (sint ne = 0; ne < id.second; ++ne)
-				// // {
-				// // 	os << "Expert " << ne << "\n";
-				// // 	for (sint p = 0; p < Settings.Hyper.ModeCount; ++p)
-				// // 	{
-				// // 		os << "\t(pi,mu,sigma) = " << model.Parameters.ExpertPi(ne, p) << " / " << model.Parameters.ExpertMu(ne, p) << " / " << model.Parameters.ExpertV(ne, p) << "\n";
-				// // 	}
-				// // 	os << "\n";
-				// // }
-				// LOG(INFO) << os.str();
 
 				for (sint j = 0; j < N; ++j)
 				{
@@ -135,6 +123,7 @@ namespace FADE
 		Eigen::VectorXd Yvec = Eigen::VectorXd::Zero(Nval);
 
 		double lscle = Settings.Prior.blpScale;
+
 		for (sint tx = 0; tx < Nval; ++tx)
 		{
 			// Eigen::VectorXd px(data.Training[tx].Position);
@@ -151,17 +140,18 @@ namespace FADE
 				K(ty, tx) = K(tx, ty);
 			}
 
-			sint Ne = data.Validation[tx].Values.size();
+			sint Nrepl = data.Validation[tx].Values.size();
 			double ysqSum = 0;
-			for (sint a = 0; a < Ne; ++a)
+			for (sint a = 0; a < Nrepl; ++a)
 			{
 				double y = data.Validation[tx].Values[a];
 				Yvec(tx) += y;
 				ysqSum += y * y;
 			}
-			Yvec(tx) = Yvec(tx) / Ne;
-			double variance = ysqSum / Ne - Yvec(tx) * Yvec(tx);
-			K(tx, tx) += std::max(variance, 0.001);
+			Yvec(tx) = Yvec(tx) / Nrepl;
+			double variance = ysqSum / Nrepl - Yvec(tx) * Yvec(tx);
+			variance = std::max(variance / Nrepl, 1e-3);
+			K(tx, tx) += variance;
 		}
 		auto solve = K.llt();
 		if (solve.info() != Eigen::Success)
@@ -186,8 +176,8 @@ namespace FADE
 			Eigen::Map<Eigen::VectorXd> px(posx.data(), posx.size());
 			for (sint j = 0; j < Nval; ++j)
 			{
-				auto &posx = data.Validation[j].Position;
-				Eigen::Map<Eigen::VectorXd> py(posx.data(), posx.size());
+				auto &posj = data.Validation[j].Position;
+				Eigen::Map<Eigen::VectorXd> py(posj.data(), posj.size());
 				double dsq = (px - py).squaredNorm();
 				k(j) = exp(-0.5 * dsq / (lscle * lscle));
 			}
@@ -208,8 +198,11 @@ namespace FADE
 				first = false;
 			}
 		}
+		LOG(INFO) << "Residual-Correction completed";
 		data.minExpectedMu = minDev;
 		data.maxExpectedMu = maxDev;
+		Settings.Prior.minMu = minDev;
+		Settings.Prior.maxMu = maxDev;
 		LOG(INFO) << "The data has residual range [" << minDev << ", " << maxDev << "]";
 	}
 	void Model::ConstructModels()
@@ -238,7 +231,7 @@ namespace FADE
 
 		for (sint t = 0; t < data.Validation.size(); ++t)
 		{
-			file << KinvY(t);
+			file << std::setprecision(17) << KinvY(t);
 			for (sint j = 0; j < Settings.Hyper.InputDimension; ++j)
 			{
 				file << " " << data.Validation[t].Position[j];

@@ -1,14 +1,16 @@
 #include <FADE/Models/Submodel.h>
 #include <FADE/Utility/ale.h>
 #include <FADE/Utility/random.h>
+#include <JSL/Display.h>
 #include <numbers>
+#include <numeric>
 namespace FADE
 {
 	void StochasticWalk(double &newV, double &oldV, double step, double prob)
 	{
 		if (Random.DiceRoll(prob))
 		{
-			newV = Random.Normal(oldV, std::max(1e-10, step * oldV));
+			newV = Random.Normal(oldV, std::max(step / 100, step * oldV));
 		}
 		else
 		{
@@ -28,51 +30,37 @@ namespace FADE
 		std::vector<double> tmpMu(proposal.Hyper.ModeCount);
 		std::vector<double> tmpPi(proposal.Hyper.ModeCount);
 		std::vector<double> tmpVar(proposal.Hyper.ModeCount);
-		double scaleMax = 0.01;
+		double scaleMax = 1e-3;
 		for (sint i = 0; i < Ne; ++i)
 		{
 			StochasticWalk(proposal.ExpertScale(i), current.ExpertScale(i), step, pmod);
-			// if (Random.DiceRoll(0.01))
-			// {
-			// 	proposal.ExpertScale(i) *= 2;
-			// }
+			if (Random.DiceRoll(0.01))
+			{
+				proposal.ExpertScale(i) *= 2;
+			}
+			if (Random.DiceRoll(0.01))
+			{
+				proposal.ExpertScale(i) /= 2;
+			}
 			proposal.ExpertScale(i) = std::max(scaleMax, proposal.ExpertScale(i));
 
+			for (sint idx = 0; idx < proposal.Hyper.ModeCount; ++idx)
+			{
+				StochasticWalk(proposal.ExpertMu(i, idx), current.ExpertMu(i, idx), step, pmod);
+				// StochasticWalk(proposal.ExpertPi(i, idx), current.ExpertPi(i, idx), step, pmod);
+				StochasticWalk(proposal.ExpertV(i, idx), current.ExpertV(i, idx), step, pmod);
+			}
+			// copy random
+			if (Random.DiceRoll(0.01))
+			{
+				sint j = round(Random.Uniform(0, Ne));
+				sint d = round(Random.Uniform(0, proposal.Hyper.InputDimension));
+				proposal.ExpertPosition(i, d) = proposal.ExpertPosition(j, d);
+			}
 			for (sint idx = 0; idx < current.Hyper.InputDimension; ++idx)
 			{
 				StochasticWalk(proposal.ExpertPosition(i, idx), current.ExpertPosition(i, idx), step, pmod);
 			}
-
-			for (sint p = 0; p < proposal.Hyper.ModeCount; ++p)
-			{
-
-				if (Random.DiceRoll(settings.SigmaIncreaseProb))
-				{
-					proposal.ExpertV(i, p) *= 2;
-				}
-			}
-
-			// if (Random.DiceRoll(0.005))
-			// {
-			// 	LOG(INFO) << "killing";
-			// 	double maxpi = current.ExpertPi(i, 0);
-			// 	sint maxp = 0;
-			// 	double vsmall = 1e-10;
-			// 	for (sint p = 1; p < proposal.Hyper.ModeCount; ++p)
-			// 	{
-			// 		auto pi = proposal.ExpertPi(i, p);
-			// 		if (pi > maxpi)
-			// 		{
-			// 			maxpi = pi;
-			// 			maxp = p;
-			// 		}
-			// 	}
-			// 	for (sint p = 0; p < proposal.Hyper.ModeCount; ++p)
-			// 	{
-			// 		proposal.ExpertPi(i, p) = vsmall;
-			// 	}
-			// 	proposal.ExpertPi(i, maxp) = 1.0 - (proposal.Hyper.ModeCount - 1) * 1e-10;
-			// }
 			if (Random.DiceRoll(0.3))
 			{
 				std::sort(sortIdx.begin(), sortIdx.end(), [&](sint a, sint b) { return current.ExpertMu(i, a) < current.ExpertMu(i, b); });
@@ -109,9 +97,9 @@ namespace FADE
 	}
 	void Submodel::Train(TrainingData &data)
 	{
+		// return;
 		CreateTrainingCache(data);
-		// if (Random.DiceRoll(0.25))
-		// 	EMFit(data, 100, 1e-3);
+		EMFit(data, 100, 1e-3);
 		auto anneal = Settings.Train.Annealing;
 		double bestScore = Score(data);
 		auto bestPos = Parameters;
@@ -124,7 +112,8 @@ namespace FADE
 		double alpha = 0.1;
 		double T = anneal.StartTemp;
 
-		double quenchingRate = pow(anneal.EndTemp / T, 1.0 / steps);
+		double quenchingRate = pow(anneal.EndTemp / T, 3.0 / steps);
+		double slowCool = pow(anneal.EndTemp / T, 0.3 / steps);
 		int timeSinceBest = 0;
 		int revertsSinceBest = 0;
 		std::deque<int> acceptance;
@@ -132,13 +121,28 @@ namespace FADE
 
 		double acceptanceRate = 0;
 		double threshhold = 1e-3;
+
+		std::unique_ptr<JSL::Display::Progress::internal::ProgressEngine> PB;
+		bool fancyBar = JSL::Display::Terminal().IsANSICapable();
+		LOG(INFO) << "Beginning Training Routine";
+		if (fancyBar)
+		{
+			PB = std::make_unique<JSL::Display::Progress::Bar>(steps, 50);
+			std::cout << JSL::Display::ClearLine << std::flush;
+		}
+		else
+		{
+			PB = std::make_unique<JSL::Display::Progress::Static>(steps);
+		}
+		PB->SetPrefix("\t");
 		for (sint l = 0; l < steps; ++l)
 		{
 			GenerateProposal(currentPos, Parameters, Settings.Train.Annealing, alpha, Ne, Nd);
-			if (Random.DiceRoll(0.5))
+			if (Random.DiceRoll(0.4))
 			{
-				EMFit(data, 50, threshhold);
-				// threshhold *= 0.999;
+				int emStep = Random.Uniform(5, 40);
+				EMFit(data, emStep, threshhold);
+				threshhold *= 0.999;
 			}
 
 			double newScore = Score(data);
@@ -167,31 +171,29 @@ namespace FADE
 
 					bestScore = newScore;
 
-					LOG(INFO) << JSL::Display::Green() << "New best: " << bestScore;
-					for (sint e = 0; e < Ne; ++e)
-					{
-						std::ostringstream os;
-						os << "Expert " << e + 1 << " is at ";
-						for (sint d = 0; d < currentPos.Hyper.InputDimension; ++d)
-						{
-							if (d > 0) os << ", ";
-							os << currentPos.ExpertPosition(e, d);
-						}
-						os << " and has mu = (";
-						for (sint p = 0; p < currentPos.Hyper.ModeCount; ++p)
-						{
-							if (p > 0) os << ", ";
-							os << currentPos.ExpertMu(e, p);
-						}
-						os << ")";
-						os << " and scale " << currentPos.ExpertScale(e);
-						LOG(INFO) << os.str();
-					}
+					// LOG(INFO) << JSL::Display::Green() << "New best: " << bestScore;
+					// for (sint e = 0; e < Ne; ++e)
+					// {
+					// 	std::ostringstream os;
+					// 	os << "Expert " << e + 1 << " is at ";
+					// 	for (sint d = 0; d < currentPos.Hyper.InputDimension; ++d)
+					// 	{
+					// 		if (d > 0) os << ", ";
+					// 		os << currentPos.ExpertPosition(e, d);
+					// 	}
+					// 	os << " and has mu = (";
+					// 	for (sint p = 0; p < currentPos.Hyper.ModeCount; ++p)
+					// 	{
+					// 		if (p > 0) os << ", ";
+					// 		os << currentPos.ExpertMu(e, p);
+					// 	}
+					// 	os << ")";
+					// 	os << " and scale " << currentPos.ExpertScale(e);
+					// 	LOG(INFO) << os.str();
+					// }
 					timeSinceBest = 0;
 					revertsSinceBest = 0;
 					alpha *= 2;
-
-					LOG(INFO) << JSL::Display::Red() << "New alpha  " << alpha;
 				}
 			}
 			else if (newScore != Settings.Train.LogZero)
@@ -212,6 +214,7 @@ namespace FADE
 			else
 			{
 				forceRevert = true;
+				alpha *= 0.7;
 			}
 			if (accept)
 			{
@@ -220,22 +223,19 @@ namespace FADE
 			}
 			else
 			{
-				if (forceRevert || timeSinceBest > 25)
+				if (forceRevert || timeSinceBest > 100)
 				{
 					currentPos.Copy(bestPos);
 					currentScore = bestScore;
-					timeSinceBest = 0;
 					alpha *= 0.9;
 					if (!forceRevert)
 					{
+						timeSinceBest = 0;
 						++revertsSinceBest;
-						LOG(WARN) << "No progress; reversion " << revertsSinceBest;
-						// acceptance.clear();
-
-						if (revertsSinceBest > 5)
-						{
-							break;
-						}
+						// if (revertsSinceBest > 5)
+						// {
+						// 	break;
+						// }
 					}
 				}
 			}
@@ -247,6 +247,7 @@ namespace FADE
 			if (acceptance.size() > memorySize)
 			{
 				acceptanceRate = (n * acceptanceRate - acceptance.front()) * 1.0 / (n - 1);
+				acceptanceRate = std::max(acceptanceRate, 0.0);
 				acceptance.pop_front();
 				if (acceptanceRate > 0.3)
 				{
@@ -255,15 +256,33 @@ namespace FADE
 				}
 				if (acceptanceRate < 0.2)
 				{
-					T *= 1.05;
+					T *= 1.02;
 					alpha *= 0.99;
+					if (acceptanceRate == 0)
+					{
+						T *= 10;
+					}
 				}
 			}
-
-			if (l % 5 == 0)
+			if ((l + 1) % (3 * memorySize) == 0)
 			{
-				LOG(INFO) << l << " " << acceptanceRate << " " << T << " " << alpha << " " << quenchingRate;
+				acceptanceRate = 0;
+				acceptance.clear();
 			}
+
+			// if (l % 5 == 0)
+			// {
+			// 	LOG(INFO) << l << " " << acceptanceRate << " " << timeSinceBest;
+			// }
+			if (fancyBar)
+			{
+				std::ostringstream os;
+				int perc = 100.0 * l / steps;
+				os << perc << ("% " + JSL::Display::Green() + "Optimum: ") << bestScore << JSL::Display::Red() + " Temp " << T << JSL::Display::Yellow() << " Acceptance: " << acceptanceRate << JSL::Display::ResetAll();
+				PB->SetSuffix(os.str());
+			}
+			PB->Tick();
+			T *= slowCool;
 		}
 
 		Parameters.Copy(bestPos);

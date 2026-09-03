@@ -1,5 +1,6 @@
 #include <FADE/Parameters/ParameterVector.h>
 #include <FADE/Utility/random.h>
+#include <numeric>
 namespace FADE
 {
 	ParameterVector::ParameterVector(HyperSettings &hyper, sint departmentCount, sint expertCount) : Hyper(hyper)
@@ -57,18 +58,31 @@ namespace FADE
 				Phi(k, idx) = Random.Uniform(0, 1);
 			}
 		}
+
+		// Latin hypercube initialisation
+		std::vector<sint> indices(Ne);
+		std::iota(indices.begin(), indices.end(), 0);
+		for (sint d = 0; d < Hyper.InputDimension; ++d)
+		{
+			double dx = (upper[d] - lower[d]) / Ne;
+			std::shuffle(indices.begin(), indices.end(), Random.RandomGen);
+			for (sint i = 0; i < Ne; ++i)
+			{
+				ExpertPosition(i, d) = lower[d] + (indices[i] + 0.5) * dx;
+			}
+		}
+
 		for (sint i = 0; i < Ne; ++i)
 		{
-			for (sint idx = 0; idx < Hyper.InputDimension; ++idx)
-			{
-				ExpertPosition(i, idx) = Random.Uniform(lower[idx], upper[idx]);
-			}
-			ExpertScale(i) = Random.Uniform(0, 0.1);
-			;
+			// for (sint idx = 0; idx < Hyper.InputDimension; ++idx)
+			// {
+			// 	ExpertPosition(i, idx) = Random.Uniform(lower[idx], upper[idx]);
+			// }
+			ExpertScale(i) = Random.Uniform(1e-3, 1e-1);
 			double s = 0;
 			for (sint p = 0; p < Hyper.ModeCount; ++p)
 			{
-				ExpertMu(i, p) = Random.Uniform();
+				ExpertMu(i, p) = Random.Uniform(prior.minMu, prior.maxMu);
 				ExpertPi(i, p) = Random.Uniform();
 				s += ExpertPi(i, p);
 				ExpertV(i, p) = Random.Uniform();

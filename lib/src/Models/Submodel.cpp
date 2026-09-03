@@ -107,6 +107,7 @@ namespace FADE
 	}
 	double Submodel::CutPrior()
 	{
+		double s = 0;
 		for (sint e = 0; e < Ne; ++e)
 		{
 			for (sint d = 0; d < Settings.Hyper.InputDimension; ++d)
@@ -119,7 +120,7 @@ namespace FADE
 			}
 		}
 
-		return 0;
+		return s;
 	}
 
 	double Submodel::Prior()
