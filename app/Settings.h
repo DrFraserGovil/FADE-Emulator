@@ -36,9 +36,6 @@ class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 	//! @alias query-out
 	std::filesystem::path QueryOut = "QueryOutput.dat";
 
-	//! @brief The query resolution in y-space
-	//! @alias query-resolution r resolution
-	size_t Resolution = 100;
 #include "Settings.AppSettings.autogen"
 };
 

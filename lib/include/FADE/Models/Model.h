@@ -1,7 +1,7 @@
 #pragma once
 #include "Submodel.h"
 #include <Eigen/Dense>
-#include <FADE/Infer/InferPoint.h>
+#include <FADE/Infer/QueryPoint.h>
 #include <filesystem>
 namespace FADE
 {

@@ -149,6 +149,66 @@ namespace FADE
 		}
 		return out;
 	}
+	std::pair<double, double> Submodel::GetBounds(double threshold)
+	{
+		return {EstimateCDFPos(threshold), EstimateCDFPos(1.0 - threshold)};
+	}
+	double Submodel::EstimateCDFPos(double val)
+	{
+		val = std::max(val, 1e-10);
+		val = std::min(1 - 1e-10, val);
+		auto muCop = Mus;
+		auto vCop = Vrs;
+		std::sort(muCop.begin(), muCop.end());
+		std::sort(vCop.begin(), vCop.end());
+		double boundFactor = 2;
+		double lower;
+		double upper;
+
+		while (true)
+		{
+			lower = muCop[0] - sqrt(vCop.back()) * boundFactor;
+			upper = muCop.back() + sqrt(vCop.back()) * boundFactor;
+			double lowerVal = CDF(lower);
+			double upperVal = CDF(upper);
+			if (lowerVal < val && upperVal > val)
+			{
+				break;
+			}
+			boundFactor *= 2;
+			if (boundFactor > 100)
+			{
+				LOG(ERROR) << "Could not find the bounds of the CDF; distribution is likely malformed";
+				exit(1);
+			}
+		}
+		double mid = 0.5 * (lower + upper);
+		double midval = CDF(mid);
+		while (abs(midval - val) > 1e-5)
+		{
+			if (midval > val)
+			{
+				upper = mid;
+			}
+			else
+			{
+				lower = mid;
+			}
+			mid = 0.5 * (lower + upper);
+			midval = CDF(mid);
+		}
+		return mid;
+	}
+	double Submodel::CDF(double y)
+	{
+
+		double v = 0;
+		for (sint i = 0; i < Mus.size(); ++i)
+		{
+			v += GaussianCDF(y, Mus[i], Vrs[i]) * Pis[i];
+		}
+		return v;
+	}
 
 	double Submodel::ComputeDistance(std::function<double(sint)> a, std::function<double(sint)> b, size_t dep)
 	{

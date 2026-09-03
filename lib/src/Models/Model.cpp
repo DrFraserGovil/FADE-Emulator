@@ -1,5 +1,5 @@
 #include <FADE/Models/Model.h>
-
+#include <JSL/Vectors/Range.h>
 namespace FADE
 {
 
@@ -67,8 +67,10 @@ namespace FADE
 			exit(1);
 		}
 
+		auto oldInfer = Settings.Infer;
 		auto lines = vault["train.config"].AsLines();
 		Settings.Configure(lines, " ");
+		Settings.Infer = oldInfer; // inference settings are *not* overwritten from file
 		ConstructModels();
 		BLPLoad(vault);
 		forAllModels([&vault](auto &model) { model.Load(vault); model.SyncParameters(); });
@@ -81,11 +83,19 @@ namespace FADE
 		LOG(INFO) << "Beginning inference loop";
 		auto tmp = JSL::Log::Indent();
 
-		std::vector<double> out;
+		std::vector<double> probVec;
+		std::vector<double> cdfVec;
 		for (auto &query : queries)
 		{
 			sint N = query.PredictionGrid.size();
-			out.resize(N);
+			bool requiresBounding = false;
+			if (N == 0)
+			{
+				requiresBounding = true;
+				N = Settings.Infer.Resolution;
+			}
+			probVec.resize(N);
+			cdfVec.resize(N);
 			// query.PredictionValues.resize(N);
 			LOG(INFO) << "Inferring at position" << query.EmulationPoint;
 			std::vector<double> p = query.EmulationPoint;
@@ -104,14 +114,26 @@ namespace FADE
 			for (auto &[id, model] : Models)
 			{
 				model.SetPosition(query.EmulationPoint);
-
+				if (requiresBounding)
+				{
+					LOG(INFO) << JSL::Display::Green() << "Auto-bounding was requested.";
+					double thresh = Settings.Infer.CDFBound;
+					auto [l, u] = model.GetBounds(thresh);
+					l += prediction;
+					u += prediction;
+					LOG(INFO) << "\tThe [" << thresh << ", " << 1.0 - thresh << "] boundary is [" << l << ", " << u << "]";
+					query.PredictionGrid = JSL::Vector::range(l, u, N);
+				}
 				for (sint j = 0; j < N; ++j)
 				{
-					out[j] = exp(model.LogGaussian(query.PredictionGrid[j] - prediction));
+					double x = query.PredictionGrid[j] - prediction;
+					probVec[j] = exp(model.LogGaussian(x));
+					cdfVec[j] = model.CDF(x);
 				}
 
 				//! HACK: This is just whilst we're on single-only models
-				query.SubmodelValues[id] = out;
+				query.SubmodelProbability[id] = std::move(probVec);
+				query.SubmodelCDF[id] = std::move(cdfVec);
 			};
 		}
 	}

@@ -10,9 +10,14 @@ namespace FADE
 	const double log2 = log(2);
 	inline double LogGaussianDistribution(double x, double mu, double var)
 	{
-		double s2 = std::max(var, 1e-6);
+		double s2 = std::max(var, 1e-16);
 		double d = (x - mu);
 		return log_pi_norm - 0.5 * log(s2) - 0.5 * d * d / var;
+	}
+	inline double GaussianCDF(double x, double mu, double var)
+	{
+		double d = (x - mu) / sqrt(2 * var);
+		return 0.5 * (1.0 + erf(d));
 	}
 
 	// inline double lerfc(double x)
