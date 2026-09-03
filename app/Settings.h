@@ -11,6 +11,8 @@ using namespace FADE;
 class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 {
   public:
+	ModelSettings Model;
+
 	//! @alias v verbose
 	//! @brief If true, recieve DEBUG level logs to the output stream. Takes priority over Quiet mode.
 	bool Verbose = false;
@@ -22,8 +24,6 @@ class AppSettings : public JSL::Interface::Aggregator<AppSettings>
 	//! @alias file, input
 	//! @brief A set of files to be processed. Any files passed as positional arguments will also be stored here
 	std::set<std::filesystem::path> Files = {};
-
-	ModelSettings Model;
 
 	//! @alias settings
 	//! @brief If set, this value is used to save the value of the configuration file

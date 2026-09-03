@@ -160,8 +160,10 @@ void Predict(std::set<std::filesystem::path> paths)
 
 	model.Predict(out);
 
-	auto nd = Settings.Model.Hyper.Departments;
-	auto ne = Settings.Model.Hyper.Experts;
+	Settings.Model.Hyper.SetRanges();
+	auto nd = Settings.Model.Hyper.DepartmentRange;
+	auto ne = Settings.Model.Hyper.ExpertRange;
+
 	for (sint k = nd.first; k <= nd.second; ++k)
 	{
 		for (sint i = ne.first; i <= ne.second; ++i)

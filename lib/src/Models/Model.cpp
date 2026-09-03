@@ -250,10 +250,10 @@ namespace FADE
 	}
 	void Model::ConstructModels()
 	{
-
-		for (sint nd = Settings.Hyper.Departments.first; nd <= Settings.Hyper.Departments.second; ++nd)
+		Settings.Hyper.SetRanges();
+		for (sint nd = Settings.Hyper.DepartmentRange.first; nd <= Settings.Hyper.DepartmentRange.second; ++nd)
 		{
-			for (sint ne = Settings.Hyper.Experts.first; ne <= Settings.Hyper.Experts.second; ++ne)
+			for (sint ne = Settings.Hyper.ExpertRange.first; ne <= Settings.Hyper.ExpertRange.second; ++ne)
 			{
 				Models.try_emplace({nd, ne}, Settings, nd, ne);
 			}
